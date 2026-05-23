@@ -246,28 +246,66 @@ class _LogoOrb extends StatelessWidget {
           painter: _HexagonPainter(),
         ),
 
-        // ── Crescent Icon with Gradient ──────────────
-        ShaderMask(
-          shaderCallback: (bounds) => const LinearGradient(
-            colors: [
-              AppColors.goldGlow,
-              AppColors.gold,
-              AppColors.goldLight,
-            ],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ).createShader(bounds),
-          child: const Text(
-            '☪',
-            style: TextStyle(
-              fontSize: 60,
-              color: Colors.white,
-            ),
-          ),
+        // ── Crescent & Star ──────────────────────────
+        CustomPaint(
+          size: const Size(64, 64),
+          painter: _CrescentStarPainter(),
         ),
       ],
     );
   }
+}
+
+class _CrescentStarPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    
+    final paint = Paint()
+      ..shader = const LinearGradient(
+        colors: [AppColors.goldGlow, AppColors.gold, AppColors.goldLight],
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height))
+      ..style = PaintingStyle.fill;
+
+    // ── Crescent ─────────────────────────────────────
+    // We create a crescent by subtracting a smaller circle from a larger one
+    final Path crescentPath = Path.combine(
+      PathOperation.difference,
+      Path()..addOval(Rect.fromCircle(center: center, radius: size.width * 0.45)),
+      Path()..addOval(Rect.fromCircle(
+        center: center.translate(size.width * 0.18, 0), 
+        radius: size.width * 0.38
+      )),
+    );
+    canvas.drawPath(crescentPath, paint);
+
+    // ── Star ─────────────────────────────────────────
+    final starPath = Path();
+    final starCenter = center.translate(size.width * 0.22, 0);
+    const int points = 5;
+    final double outerRadius = size.width * 0.16;
+    final double innerRadius = size.width * 0.07;
+
+    for (int i = 0; i < points; i++) {
+      double angle = (i * 72 - 90) * math.pi / 180;
+      starPath.lineTo(
+        starCenter.dx + outerRadius * math.cos(angle),
+        starCenter.dy + outerRadius * math.sin(angle),
+      );
+      angle += math.pi / points;
+      starPath.lineTo(
+        starCenter.dx + innerRadius * math.cos(angle),
+        starCenter.dy + innerRadius * math.sin(angle),
+      );
+    }
+    starPath.close();
+    canvas.drawPath(starPath, paint);
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => false;
 }
 
 class _HexagonClipper extends CustomClipper<Path> {

@@ -5,41 +5,64 @@
 *.swp
 .DS_Store
 .atom/
-.build/
 .buildlog/
 .history
 .svn/
-.swiftpm/
-migrate_working_dir/
+.idea/
+*.iml
 
 # IntelliJ related
-*.iml
 *.ipr
 *.iws
 .idea/
 
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
+# The .vscode folder contains launch configurations and commonly used settings for VS Code users.
+.vscode/
 
 # Flutter/Dart/Pub related
 **/doc/api/
 **/ios/Flutter/.last_build_id
 .dart_tool/
+.flutter-plugins
 .flutter-plugins-dependencies
+.packages
 .pub-cache/
 .pub/
 /build/
-/coverage/
+
+# Android related
+**/android/**/generated/
+**/android/gradle/
+**/android/local.properties
+**/android/out/
+**/android/app/debug/
+**/android/app/profile/
+**/android/app/release/
+
+# iOS related
+**/ios/Flutter/App.framework
+**/ios/Flutter/Flutter.framework
+**/ios/Flutter/Flutter.podspec
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/app.flx
+**/ios/Flutter/app.zip
+**/ios/Flutter/flutter_assets/
+**/ios/Flutter/flutter_export_environment.sh
+**/ios/ServiceDefinitions.json
+**/ios/Runner/GeneratedPluginRegistrant.[mh]
 
 # Symbolication related
 app.*.symbols
 
-# Obfuscation related
+# Executable ELF binary
 app.*.map.json
 
-# Android Studio will place build artifacts here
-/android/app/debug
-/android/app/profile
-/android/app/release
+# Android Studio will cope with this being missing, but it allowed us to skip a load of unpacking
+**/android/app/src/main/res/raw/app.zip
+
+# Crashlytics generated file
+ios/Runner/Fabric.plist
+
+# Exceptions to above rules
+!**/ios/Runner/GeneratedPluginRegistrant.h
+!**/ios/Runner/GeneratedPluginRegistrant.m
