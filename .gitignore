@@ -8,15 +8,15 @@
 .buildlog/
 .history
 .svn/
-.idea/
-*.iml
+analysis.txt
 
 # IntelliJ related
+*.iml
 *.ipr
 *.iws
 .idea/
 
-# The .vscode folder contains launch configurations and commonly used settings for VS Code users.
+# Visual Studio Code
 .vscode/
 
 # Flutter/Dart/Pub related
@@ -38,6 +38,9 @@
 **/android/app/debug/
 **/android/app/profile/
 **/android/app/release/
+*.jks
+*.keystore
+key.properties
 
 # iOS related
 **/ios/Flutter/App.framework
@@ -50,6 +53,16 @@
 **/ios/Flutter/flutter_export_environment.sh
 **/ios/ServiceDefinitions.json
 **/ios/Runner/GeneratedPluginRegistrant.[mh]
+**/macos/Flutter/GeneratedPluginRegistrant.swift
+
+# Firebase / Secrets
+google-services.json
+GoogleService-Info.plist
+.firebaserc
+firebase.json
+firestore.rules
+firestore.indexes.json
+.env*
 
 # Symbolication related
 app.*.symbols
