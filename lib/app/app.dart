@@ -1,6 +1,6 @@
-import 'package:deen_iq/features/splash/splash_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'router.dart';
 import 'theme.dart';
 
 class DeenQuizApp extends ConsumerWidget {
@@ -8,12 +8,13 @@ class DeenQuizApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return MaterialApp(
-      title: 'Deen — Islamic Quiz',
+    final router = ref.watch(routerProvider);
+
+    return MaterialApp.router(
+      title: 'Deen IQ — Islamic Quiz',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.dark,
-      // Temporary home — replaced with GoRouter in Step 10
-      home: const SplashScreen(),
+      routerConfig: router,
     );
   }
 }
