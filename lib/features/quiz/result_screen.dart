@@ -7,6 +7,8 @@ import '../../core/constant/app_colors.dart';
 import '../../core/widgets/geo_background.dart';
 import '../../core/widgets/gold_button.dart';
 import '../../data/models/quiz_model.dart';
+import '../../data/repositories/user_repository.dart';
+import '../../state/auth_provider.dart';
 import '../../state/quiz_provider.dart';
 import '../../state/quiz_state.dart';
 import 'widget/coin_earn_animation.dart';
@@ -48,6 +50,9 @@ class _ResultScreenState extends ConsumerState<ResultScreen>
     // Capture final state before any resets
     _finalState = ref.read(quizProvider);
     _stars = Stage.calculateStars(_finalState.scorePercent);
+
+    // Sync stats to Firestore
+    _syncStats();
 
     // Fade in
     _fadeCtrl = AnimationController(
@@ -262,7 +267,25 @@ class _ResultScreenState extends ConsumerState<ResultScreen>
       context.goNamed(Routes.difficulty);
     }
   }
+
+  Future<void> _syncStats() async {
+    final uid = ref.read(currentUserProvider)?.uid;
+    if (uid == null) return;
+
+    try {
+      await UserRepository.instance.updateStats(
+        uid: uid,
+        correctAnswers: _finalState.score,
+        totalAnswers: _finalState.totalQuestions,
+        streak: _finalState.bestStreak,
+        stagesCompleted: _finalState.isPassing ? 1 : 0,
+      );
+    } catch (e) {
+      debugPrint('Failed to sync stats: $e');
+    }
+  }
 }
+
 
 // ── Result header ──────────────────────────────
 class _ResultHeader extends StatelessWidget {
