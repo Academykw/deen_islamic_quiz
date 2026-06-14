@@ -55,6 +55,16 @@ class TimerBarState extends State<TimerBar>
     });
   }
 
+  /// Reset the timer for a new question
+  void reset() {
+    _ctrl.reset();
+    _ctrl.forward();
+    setState(() {
+      _remaining = widget.seconds;
+      _called = false;
+    });
+  }
+
   @override
   void didUpdateWidget(TimerBar old) {
     super.didUpdateWidget(old);
