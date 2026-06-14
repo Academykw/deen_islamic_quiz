@@ -18,7 +18,7 @@ class CoinNotifier extends Notifier<int> {
   // ── Load saved balance ─────────────────────────
   Future<void> _loadCoins() async {
     final prefs = await SharedPreferences.getInstance();
-    state = prefs.getInt(_key) ?? 0;
+    state = prefs.getInt(_key) ?? 200; // Give 200 welcome coins
   }
 
   // ── Add coins (after correct answer / session) ─
