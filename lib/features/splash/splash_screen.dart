@@ -1,18 +1,21 @@
 import 'dart:math' as math;
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../app/router.dart';
 import '../../core/constant/app_colors.dart';
 import '../../core/widgets/geo_background.dart';
+import '../../state/auth_provider.dart';
 
-class SplashScreen extends StatefulWidget {
+class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen>
+class _SplashScreenState extends ConsumerState<SplashScreen>
     with TickerProviderStateMixin {
   late final AnimationController _logoController;
   late final AnimationController _textController;
@@ -77,10 +80,15 @@ class _SplashScreenState extends State<SplashScreen>
     await Future.delayed(const Duration(milliseconds: 400));
     _subController.forward();
 
-    // Navigate to home after splash
+    // Navigate to appropriate screen after splash
     await Future.delayed(const Duration(milliseconds: 1800));
     if (mounted) {
-      context.goNamed(Routes.home);
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        context.goNamed(Routes.home);
+      } else {
+        context.goNamed(Routes.login);
+      }
     }
   }
 
@@ -141,7 +149,7 @@ class _SplashScreenState extends State<SplashScreen>
                               letterSpacing: 12,
                               shadows: [
                                 Shadow(
-                                  color: AppColors.gold.withOpacity(0.3),
+                                  color: AppColors.gold.withValues(alpha: 0.3),
                                   blurRadius: 20,
                                 ),
                               ],
@@ -304,7 +312,7 @@ class _HexagonPainter extends CustomPainter {
 
     // Subtle inner glow line
     final innerPaint = Paint()
-      ..color = AppColors.gold.withOpacity(0.3)
+      ..color = AppColors.gold.withValues(alpha: 0.3)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.0;
     
