@@ -141,7 +141,7 @@ class DifficultyScreen extends ConsumerWidget {
   }
 
   void _navigateToStages(BuildContext context, Difficulty difficulty) {
-    context.goNamed(
+    context.pushNamed(
       Routes.stages,
       pathParameters: {'difficulty': difficulty.name},
     );
@@ -157,7 +157,7 @@ class _DifficultyAppBar extends StatelessWidget {
       child: Row(
         children: [
           IconButton(
-            onPressed: () => Navigator.of(context).maybePop(),
+            onPressed: () => context.pop(),
             icon: const Icon(
               Icons.arrow_back_ios_rounded,
               color: AppColors.textSecondary,
@@ -203,9 +203,9 @@ class _SummaryChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -234,16 +234,16 @@ class _CoinInfoBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.coin.withOpacity(0.06),
+        color: AppColors.coin.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.coin.withOpacity(0.2)),
+        border: Border.all(color: AppColors.coin.withValues(alpha: 0.2)),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AppColors.coin.withOpacity(0.15),
+              color: AppColors.coin.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(
