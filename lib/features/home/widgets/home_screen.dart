@@ -69,7 +69,7 @@ class HomeScreen extends ConsumerWidget {
 
                         // Quick play card
                         QuickPlayCard(
-                          onTap: () =>context.goNamed(Routes.difficulty),
+                          onTap: () => context.pushNamed(Routes.difficulty),
                         ),
 
                         const SizedBox(height: 20),
@@ -81,8 +81,7 @@ class HomeScreen extends ConsumerWidget {
 
                         // Daily challenge card
                         DailyChallengeCard(
-                          onTap: () =>context.goNamed(Routes.difficulty),
-
+                          onTap: () => context.pushNamed(Routes.difficulty),
                         ),
 
                         const SizedBox(height: 24),
@@ -115,12 +114,10 @@ class HomeScreen extends ConsumerWidget {
               context.goNamed(Routes.home);
               break;
             case 1:
-            // Leaderboard — Phase 2
-            // context.goNamed(Routes.leaderboard);
+              context.pushNamed(Routes.leaderboard);
               break;
             case 2:
-            // Profile — Phase 2
-            // context.goNamed(Routes.profile);
+              context.goNamed(Routes.profile);
               break;
             case 3:
             // Redeem — Phase 3
@@ -154,7 +151,7 @@ class _HomeAppBar extends StatelessWidget {
                 colors: [AppColors.emeraldMid, AppColors.emerald],
               ),
               border: Border.all(
-                  color: AppColors.gold.withOpacity(0.5), width: 1.5),
+                  color: AppColors.gold.withValues(alpha: 0.5), width: 1.5),
             ),
             child: const Center(
               child: Text('☪',
@@ -259,6 +256,12 @@ class _StatsRow extends StatelessWidget {
   final int bestStreak;
   final int coins;
 
+  String get _multiplier {
+    if (bestStreak >= 5) return '2×';
+    if (bestStreak >= 3) return '1.5×';
+    return '1×';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Row(
@@ -277,13 +280,19 @@ class _StatsRow extends StatelessWidget {
           valueColor: AppColors.gold,
         ),
         const SizedBox(width: 10),
-        StatCard(
+      /*  StatCard(
           label: 'Total Coins',
           value: coins >= 1000
               ? '${(coins / 1000).toStringAsFixed(1)}k'
               : coins.toString(),
           icon: Icons.monetization_on_rounded,
           valueColor: AppColors.coin,
+        ),*/
+        StatCard(
+          label: 'Best Multi',
+          value: _multiplier,
+          icon: Icons.bolt_rounded,
+          valueColor: AppColors.hard,
         ),
       ],
     );
