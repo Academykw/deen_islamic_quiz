@@ -279,7 +279,7 @@ class _StageAppBar extends StatelessWidget {
       child: Row(
         children: [
           IconButton(
-            onPressed: () => context.goNamed(Routes.difficulty),
+            onPressed: () => context.pop(),
             icon: const Icon(
               Icons.arrow_back_ios_rounded,
               color: AppColors.textSecondary,
@@ -453,7 +453,7 @@ class _StageDetailSheet extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.darkCard,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: color.withOpacity(0.4), width: 1.5),
+        border: Border.all(color: color.withValues(alpha: 0.4), width: 1.5),
       ),
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -478,7 +478,7 @@ class _StageDetailSheet extends StatelessWidget {
               height: 72,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: color.withOpacity(0.15),
+                color: color.withValues(alpha: 0.15),
                 border: Border.all(color: color, width: 2),
               ),
               child: Center(
