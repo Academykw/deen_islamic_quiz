@@ -86,7 +86,7 @@ class _NavItem extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               decoration: BoxDecoration(
                 color: isActive
-                    ? AppColors.gold.withOpacity(0.12)
+                    ? AppColors.gold.withValues(alpha: 0.12)
                     : AppColors.transparent,
                 borderRadius: BorderRadius.circular(20),
               ),
