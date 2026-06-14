@@ -1,9 +1,14 @@
+import 'package:deen_iq/features/auth/auth_gate.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../data/models/quiz_model.dart';
+import '../features/auth/login_screen.dart';
+import '../features/auth/register_screen.dart';
 import '../features/home/widgets/home_screen.dart';
+import '../features/leaderboard/leaderboard_screen.dart';
+import '../features/profile/profile_screen.dart';
 import '../features/quiz/widget/question_screen.dart';
 import '../features/quiz/widget/stage_select_screen.dart';
 import '../features/splash/splash_screen.dart';
@@ -13,23 +18,32 @@ import '../features/quiz/difficulty_screen.dart';
 // ── Route names ────────────────────────────────
 class Routes {
   Routes._();
-  static const splash     = 'splash';
-  static const home       = 'home';
+  static const splash = 'splash';
+  static const login = 'login';
+  static const register = 'register';
+  static const home = 'home';
   static const difficulty = 'difficulty';
-  static const stages     = 'stages';
-  static const question   = 'question';
-  static const result     = 'result';
+  static const stages = 'stages';
+  static const question = 'question';
+  static const result = 'result';
+  static const leaderboard = 'leaderboard';
+  static const profile = 'profile';
+
 }
 
 // ── Route paths ────────────────────────────────
 class RoutePaths {
   RoutePaths._();
-  static const splash     = '/';
-  static const home       = '/home';
+  static const splash = '/';
+  static const login = '/login';
+  static const register = '/register';
+  static const home = '/home';
   static const difficulty = '/difficulty';
-  static const stages     = '/stages/:difficulty';
-  static const question   = '/question';
-  static const result     = '/result';
+  static const stages = '/stages/:difficulty';
+  static const question = '/question';
+  static const result = '/result';
+  static const leaderboard = '/leaderboard';
+  static const profile = '/profile';
 }
 
 // ── Extra objects passed via GoRouter extra ────
@@ -61,13 +75,53 @@ final routerProvider = Provider<GoRouter>((ref) {
         ),
       ),
 
+
+      GoRoute(
+        path: RoutePaths.profile,
+        name: Routes.profile,
+        pageBuilder: (context, state) => _buildSlide(
+          state,
+          const AuthGate(child: ProfileScreen()),
+        ),
+      ),
+
+      GoRoute(
+        path: RoutePaths.leaderboard,
+        name: Routes.leaderboard,
+        pageBuilder: (context, state) => _buildSlide(
+          state,
+          const AuthGate(child: LeaderboardScreen()),
+        ),
+      ),
+
+
+      // ── Login ───────────────────────────────
+      GoRoute(
+        path: RoutePaths.login,
+        name: Routes.login,
+        pageBuilder: (context, state) => _buildPage(
+          state,
+          const LoginScreen(),
+        ),
+      ),
+
+      // ── Register ───────────────────────────
+      GoRoute(
+        path: RoutePaths.register,
+        name: Routes.register,
+        pageBuilder: (context, state) => _buildPage(
+          state,
+          const RegisterScreen(),
+        ),
+      ),
+
       // ── Home ────────────────────────────────
       GoRoute(
         path: RoutePaths.home,
         name: Routes.home,
         pageBuilder: (context, state) => _buildPage(
           state,
-          const HomeScreen(),
+          AuthGate(child:  HomeScreen()),
         ),
       ),
 
