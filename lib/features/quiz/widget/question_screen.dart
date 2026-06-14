@@ -10,11 +10,15 @@ import '../../../app/router.dart';
 import '../../../core/constant/app_colors.dart';
 import '../../../core/widgets/coin_badge.dart';
 import '../../../core/widgets/geo_background.dart';
+import '../../../data/models/lifeline.dart';
 import '../../../data/models/quiz_model.dart';
 import '../../../state/coin_provider.dart';
 import '../../../state/quiz_provider.dart';
 import '../../../state/quiz_state.dart';
 import 'answer_option.dart';
+import 'ask_friend_card.dart';
+import 'combo_burst.dart';
+import 'lifeline_button.dart';
 
 
 class QuestionScreen extends ConsumerStatefulWidget {
@@ -26,15 +30,12 @@ class QuestionScreen extends ConsumerStatefulWidget {
   final Stage stage;
 
   @override
-  ConsumerState<QuestionScreen> createState() =>
-      _QuestionScreenState();
+  ConsumerState<QuestionScreen> createState() => _QuestionScreenState();
 }
 
-class _QuestionScreenState
-    extends ConsumerState<QuestionScreen>
+class _QuestionScreenState extends ConsumerState<QuestionScreen>
     with TickerProviderStateMixin {
-  // Timer key — rebuilt each question to reset timer
-  Key _timerKey = UniqueKey();
+  final GlobalKey<TimerBarState> _timerBarKey = GlobalKey<TimerBarState>();
   bool _timerPaused = false;
 
   // Coin pop animation
@@ -79,6 +80,62 @@ class _QuestionScreenState
     _slideCtrl.forward();
   }
 
+  void _confirmQuit() {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: AppColors.darkCard,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: const BorderSide(color: AppColors.darkBorder),
+        ),
+        title: const Text(
+          'Quit Quiz?',
+          style: TextStyle(
+            fontFamily: 'Tajawal',
+            fontWeight: FontWeight.w700,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        content: const Text(
+          'Your progress will be lost. Coins earned so far will not be saved.',
+          style: TextStyle(
+            fontFamily: 'Tajawal',
+            color: AppColors.textSecondary,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text(
+              'Keep Playing',
+              style: TextStyle(
+                fontFamily: 'Tajawal',
+                color: AppColors.emeraldLight,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // Close dialog
+              ref.read(quizProvider.notifier).resetQuiz();
+              context.goNamed(Routes.home);
+            },
+            child: const Text(
+              'Quit',
+              style: TextStyle(
+                fontFamily: 'Tajawal',
+                color: AppColors.wrong,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _coinPopCtrl.dispose();
@@ -106,17 +163,16 @@ class _QuestionScreenState
       HapticFeedback.mediumImpact();
       final delta = newState.coinsEarned - prevCoins;
       _triggerCoinPop(delta);
-      
-      // Update global coins immediately
-      ref.read(coinProvider.notifier).addCoins(delta);
     } else {
       HapticFeedback.heavyImpact();
     }
 
-    // Auto-advance after 1.4 seconds
-    Future.delayed(const Duration(milliseconds: 1400), () {
-      if (mounted) _advance();
-    });
+    // Auto-advance after 1.4 seconds (if no combo burst showing)
+    if (!newState.showComboBurst) {
+      Future.delayed(const Duration(milliseconds: 1400), () {
+        if (mounted) _advance();
+      });
+    }
   }
 
   // ── Advance to next question or result ───────
@@ -142,8 +198,8 @@ class _QuestionScreenState
     ref.read(quizProvider.notifier).nextQuestion();
 
     // Reset timer + slide animation
+    _timerBarKey.currentState?.reset();
     setState(() {
-      _timerKey = UniqueKey();
       _timerPaused = false;
     });
     _slideCtrl
@@ -182,6 +238,12 @@ class _QuestionScreenState
 
   // ── Determine answer state for each option ───
   AnswerState _answerState(int index, QuizState quizState) {
+    // Eliminated by 50/50
+    if (quizState.isEliminatedIndex(index) &&
+        !quizState.isAnswered) {
+      return AnswerState.idle; // handled by opacity below
+    }
+
     if (!quizState.isAnswered) return AnswerState.idle;
     final correct = quizState.currentQuestion?.correctIndex;
     if (index == correct) return AnswerState.correct;
@@ -206,9 +268,15 @@ class _QuestionScreenState
       );
     }
 
-    return Scaffold(
-      backgroundColor: AppColors.dark,
-      body: Stack(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        _confirmQuit();
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.dark,
+        body: Stack(
         children: [
           const GeoBackground(),
 
@@ -216,7 +284,10 @@ class _QuestionScreenState
             child: Column(
               children: [
                 // ── Top bar ─────────────────────
-                _TopBar(quizState: quizState),
+                _TopBar(
+                  quizState: quizState,
+                  onQuit: _confirmQuit,
+                ),
 
                 // ── Scrollable question area ────
                 Expanded(
@@ -229,10 +300,18 @@ class _QuestionScreenState
                       children: [
                         // Timer
                         TimerBar(
-                          key: _timerKey,
+                          key: _timerBarKey,
                           seconds: 30,
                           onTimeUp: _onTimeUp,
                           isPaused: _timerPaused,
+                        ),
+
+                        // ── Lifeline row ─────────────────────
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          child: _LifelineRow(
+                            timerKey: _timerBarKey,
+                          ),
                         ),
 
                         const SizedBox(height: 16),
@@ -263,20 +342,36 @@ class _QuestionScreenState
                           child: Column(
                             children: List.generate(
                               question.options.length,
-                                  (i) => Padding(
-                                padding: const EdgeInsets.only(
-                                    bottom: 10),
-                                child: AnswerOption(
-                                  label: question.options[i],
-                                  index: i,
-                                  state: _answerState(
-                                      i, quizState),
-                                  onTap: () => _onAnswerTap(i),
+                              (i) => Padding(
+                                padding: const EdgeInsets.only(bottom: 10),
+                                child: AnimatedOpacity(
+                                  duration: const Duration(milliseconds: 300),
+                                  opacity: quizState.isEliminatedIndex(i) &&
+                                          !quizState.isAnswered
+                                      ? 0.18
+                                      : 1.0,
+                                  child: IgnorePointer(
+                                    ignoring: quizState.isEliminatedIndex(i) &&
+                                        !quizState.isAnswered,
+                                    child: AnswerOption(
+                                      label: question.options[i],
+                                      index: i,
+                                      state: _answerState(i, quizState),
+                                      onTap: () => _onAnswerTap(i),
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),
                           ),
                         ),
+
+                        // Ask friend hint card
+                        if (quizState.friendHint != null)
+                          AskFriendCard(
+                            hint: quizState.friendHint!,
+                            confidence: quizState.friendConfidence,
+                          ),
 
                         // Explanation (shown after answer)
                         if (quizState.isAnswered &&
@@ -332,16 +427,51 @@ class _QuestionScreenState
                 ),
               ),
             ),
+
+          // ── Combo burst overlay ─────────────────────
+          Consumer(
+            builder: (context, ref, _) {
+              final showBurst = ref.watch(
+                quizProvider.select((s) => s.showComboBurst),
+              );
+              final streak = ref.watch(
+                quizProvider.select((s) => s.streak),
+              );
+
+              if (!showBurst) return const SizedBox.shrink();
+
+              return ComboBurst(
+                streak: streak,
+                onComplete: () {
+                  ref
+                      .read(quizProvider.notifier)
+                      .dismissComboBurst();
+                  // Resume auto-advance
+                  Future.delayed(
+                      const Duration(milliseconds: 200),
+                          () {
+                        if (mounted) _advance();
+                      });
+                },
+              );
+            },
+          ),
         ],
       ),
+      )
     );
   }
 }
 
 // ── Top bar ────────────────────────────────────
 class _TopBar extends StatelessWidget {
-  const _TopBar({required this.quizState});
+  const _TopBar({
+    required this.quizState,
+    required this.onQuit,
+  });
+
   final QuizState quizState;
+  final VoidCallback onQuit;
 
   @override
   Widget build(BuildContext context) {
@@ -351,7 +481,7 @@ class _TopBar extends StatelessWidget {
         children: [
           // Quit button
           GestureDetector(
-            onTap: () => _confirmQuit(context),
+            onTap: onQuit,
             child: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
@@ -406,61 +536,6 @@ class _TopBar extends StatelessWidget {
       ),
     );
   }
-
-  void _confirmQuit(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: AppColors.darkCard,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-          side: const BorderSide(color: AppColors.darkBorder),
-        ),
-        title: const Text(
-          'Quit Quiz?',
-          style: TextStyle(
-            fontFamily: 'Tajawal',
-            fontWeight: FontWeight.w700,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        content: const Text(
-          'Your progress will be lost. Coins earned so far will not be saved.',
-          style: TextStyle(
-            fontFamily: 'Tajawal',
-            color: AppColors.textSecondary,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text(
-              'Keep Playing',
-              style: TextStyle(
-                fontFamily: 'Tajawal',
-                color: AppColors.emeraldLight,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              Navigator.of(context).pop();
-            },
-            child: const Text(
-              'Quit',
-              style: TextStyle(
-                fontFamily: 'Tajawal',
-                color: AppColors.wrong,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 // ── Question card ──────────────────────────────
@@ -484,7 +559,7 @@ class _QuestionCard extends StatelessWidget {
         border: Border.all(color: AppColors.darkBorder),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withValues(alpha: 0.2),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -512,10 +587,10 @@ class _QuestionCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(
                     horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.gold.withOpacity(0.1),
+                  color: AppColors.gold.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                      color: AppColors.gold.withOpacity(0.3)),
+                      color: AppColors.gold.withValues(alpha: 0.3)),
                 ),
                 child: Text(
                   'Question ${quizState.currentIndex + 1} of ${quizState.totalQuestions}',
@@ -598,9 +673,9 @@ class _ExplanationCard extends StatelessWidget {
       margin: const EdgeInsets.only(top: 14),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
+        color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -642,6 +717,104 @@ class _ExplanationCard extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+
+
+// ── Lifeline row widget ────────────────────────
+class _LifelineRow extends ConsumerWidget {
+  const _LifelineRow({required this.timerKey});
+  final GlobalKey<TimerBarState> timerKey;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final quizState = ref.watch(quizProvider);
+    final coins = ref.watch(coinProvider);
+
+    if (quizState.lifelines.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: quizState.lifelines.map((lifeline) {
+          return Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: LifelineButton(
+                lifeline: lifeline.copyWith(
+                  // Indicate if not enough coins
+                  isDisabled: coins < lifeline.coinCost,
+                ),
+                onTap: () => _onLifelineTap(
+                    context, ref, lifeline, coins),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Future<void> _onLifelineTap(
+      BuildContext context,
+      WidgetRef ref,
+      Lifeline lifeline,
+      int coins,
+      ) async {
+    final quizNotifier = ref.read(quizProvider.notifier);
+    final quizState = ref.read(quizProvider);
+
+    // Prevent use if already answered
+    if (quizState.isAnswered) return;
+
+    // Check coins
+    if (coins < lifeline.coinCost) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Not enough coins! Need ${lifeline.coinCost} coins.',
+            style: const TextStyle(fontFamily: 'Tajawal'),
+          ),
+          backgroundColor: AppColors.wrong,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12)),
+        ),
+      );
+      return;
+    }
+
+    // Apply lifeline first to get immediate feedback if possible
+    bool usedSuccessfully = false;
+
+    switch (lifeline.type) {
+      case LifelineType.fiftyFifty:
+        quizNotifier.useFiftyFifty();
+        usedSuccessfully = true;
+        break;
+      case LifelineType.askFriend:
+        quizNotifier.useAskFriend();
+        usedSuccessfully = true;
+        break;
+      case LifelineType.extraTime:
+        usedSuccessfully = quizNotifier.useExtraTime();
+        if (usedSuccessfully) {
+          timerKey.currentState?.addTime(15);
+        }
+        break;
+    }
+
+    if (usedSuccessfully) {
+      // Deduct coins only if used successfully
+      await ref.read(coinProvider.notifier).spendCoins(
+        lifeline.coinCost,
+      );
+    }
   }
 }
 

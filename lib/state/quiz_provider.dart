@@ -1,15 +1,12 @@
 import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../data/models/lifeline.dart';
 import '../data/models/quiz_model.dart';
 import 'quiz_state.dart';
 
 import '../data/repositories/quiz_repository.dart';
 
-// ─────────────────────────────────────────────
-// QUIZ PROVIDER
-// Manages the active quiz session
-// ─────────────────────────────────────────────
 
 class QuizNotifier extends Notifier<QuizState> {
   @override
@@ -24,10 +21,120 @@ class QuizNotifier extends Notifier<QuizState> {
       questions: shuffled,
       status: QuizStatus.active,
       currentStage: stage,
+
+      lifelines: const [
+        Lifeline(type: LifelineType.fiftyFifty, isUsed: false),
+        Lifeline(type: LifelineType.askFriend,  isUsed: false),
+        Lifeline(type: LifelineType.extraTime,  isUsed: false),
+      ],
+      eliminatedIndices: const [],
     );
   }
 
-  // ── User taps an answer ───────────────────────
+// ── 50/50 lifeline ────────────────────────────
+  void useFiftyFifty() {
+    if (state.lifelineOf(LifelineType.fiftyFifty).isUsed) {
+      return;
+    }
+    if (state.isAnswered) return;
+
+    final question = state.currentQuestion;
+    if (question == null) return;
+
+   // Collect wrong answer indices
+     final wrongIndices = List.generate(4, (i) => i)
+        .where((i) => i != question.correctIndex)
+        .toList()
+       ..shuffle();
+
+    // Eliminate 2 wrong answers
+     final toEliminate = wrongIndices.take(2).toList();
+
+     final updatedLifelines = state.lifelines.map((l) {
+       if (l.type == LifelineType.fiftyFifty) {
+         return l.copyWith(isUsed: true);
+       }
+       return l;
+      }).toList();
+
+     state = state.copyWith(
+      lifelines: updatedLifelines,
+      eliminatedIndices: toEliminate,
+  );
+}
+
+   void useAskFriend() {
+     if (state.lifelineOf(LifelineType.askFriend).isUsed) {
+       return;
+     }
+     if (state.isAnswered) return;
+
+     final question = state.currentQuestion;
+     if (question == null) return;
+
+   // Generate hint — use explanation or correct answer
+     final hint = question.explanation != null
+         ? 'My friend says: "${question.explanation!.split('.').first}."'
+         : 'My friend thinks the answer is "${question.correctAnswer}".';
+
+    // Confidence: 72–94% range for realism
+      final confidence = 72 + (question.correctIndex * 7) % 22;
+
+      final updatedLifelines = state.lifelines.map((l) {
+        if (l.type == LifelineType.askFriend) {
+          return l.copyWith(isUsed: true);
+        }
+        return l;
+     }).toList();
+     state = state.copyWith(
+       lifelines: updatedLifelines,
+       friendHint: hint,
+       friendConfidence: confidence,
+     );
+   }
+
+
+   // ── Extra Time lifeline ────────────────────────
+   // Returns true if used successfully (caller adds time to TimerBar)
+   bool useExtraTime() {
+     if (state.lifelineOf(LifelineType.extraTime).isUsed) {
+       return false;
+     }
+     if (state.isAnswered) return false;
+
+     final updatedLifelines = state.lifelines.map((l) {
+        if (l.type == LifelineType.extraTime) {
+           return l.copyWith(isUsed: true);
+        }
+         return l;
+       }).toList();
+
+     state = state.copyWith(lifelines: updatedLifelines);
+     return true;
+   }
+
+
+  // ── Clear lifeline hints on next question ──────
+   void nextQuestion() {
+     if (state.status != QuizStatus.answered) return;
+
+     final nextIndex = state.currentIndex + 1;
+     final isComplete = nextIndex >= state.totalQuestions;
+     state = state.copyWith(
+       currentIndex: nextIndex,
+       clearSelectedAnswer: true,
+       isAnswered: false,
+       isCorrect: false,
+       status: isComplete ? QuizStatus.complete : QuizStatus.active,
+       // Clear per-question lifeline effects
+       eliminatedIndices: const [],
+       clearFriendHint: true,
+       friendConfidence: 0,
+     );
+   }
+
+
+// ── User taps an answer ───────────────────────
   void selectAnswer(int index) {
     // Ignore if already answered or no active question
     if (state.isAnswered || state.status != QuizStatus.active) return;
@@ -41,6 +148,11 @@ class QuizNotifier extends Notifier<QuizState> {
     final newScore = correct ? state.score + 1 : state.score;
     final coinsForAnswer = correct ? _calculateCoins(question, newStreak) : 0;
 
+    // Trigger combo burst at streak milestones
+    final isMilestone = correct &&
+        (newStreak == 3 || newStreak == 5 ||
+            newStreak == 7 || newStreak == 10);
+
     state = state.copyWith(
       selectedAnswerIndex: index,
       isAnswered: true,
@@ -50,23 +162,12 @@ class QuizNotifier extends Notifier<QuizState> {
       bestStreak: newBestStreak,
       coinsEarned: state.coinsEarned + coinsForAnswer,
       status: QuizStatus.answered,
+      showComboBurst: isMilestone,
     );
   }
-
-  // ── Advance to next question ──────────────────
-  void nextQuestion() {
-    if (state.status != QuizStatus.answered) return;
-
-    final nextIndex = state.currentIndex + 1;
-    final isComplete = nextIndex >= state.totalQuestions;
-
-    state = state.copyWith(
-      currentIndex: nextIndex,
-      clearSelectedAnswer: true,
-      isAnswered: false,
-      isCorrect: false,
-      status: isComplete ? QuizStatus.complete : QuizStatus.active,
-    );
+  // Add method to dismiss combo burst
+  void dismissComboBurst() {
+    state = state.copyWith(showComboBurst: false);
   }
 
   // ── Reset back to idle ────────────────────────
