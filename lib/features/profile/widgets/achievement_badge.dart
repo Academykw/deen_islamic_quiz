@@ -174,6 +174,7 @@ List<AchievementData> buildAchievements({
   required int totalCorrect,
   required int bestStreak,
   required int coins,
+  required int totalCompleted,
 }) {
   return [
     AchievementData(
@@ -258,7 +259,7 @@ List<AchievementData> buildAchievements({
       emoji: '🌙',
       title: 'Consistent',
       description: 'Complete 7 daily challenges',
-      isUnlocked: false, // Wired in Step 7
+      isUnlocked: totalCompleted >= 7, // Wired in Step 7
     ),
   ];
 }
