@@ -41,7 +41,7 @@ class Question {
   final int correctIndex;      // 0-based index of correct answer
   final Difficulty difficulty;
   final QuestionCategory category;
-  final String? explanation;   // Shown after answering (Phase 2)
+  final String? explanation;   // Shown after answering
   final int coinReward;        // Base coins for correct answer
 
   String get correctAnswer => options[correctIndex];
@@ -53,6 +53,40 @@ class Question {
       case Difficulty.medium: return (coinReward * 1.5).round();
       case Difficulty.hard:   return coinReward * 2;
     }
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'text': text,
+      'arabicText': arabicText,
+      'options': options,
+      'correctIndex': correctIndex,
+      'difficulty': difficulty.name,
+      'category': category.name,
+      'explanation': explanation,
+      'coinReward': coinReward,
+    };
+  }
+
+  factory Question.fromMap(Map<String, dynamic> map, String id) {
+    return Question(
+      id: id,
+      text: map['text'] ?? '',
+      arabicText: map['arabicText'],
+      options: List<String>.from(map['options'] ?? []),
+      correctIndex: map['correctIndex'] ?? 0,
+      difficulty: Difficulty.values.firstWhere(
+        (e) => e.name == map['difficulty'],
+        orElse: () => Difficulty.easy,
+      ),
+      category: QuestionCategory.values.firstWhere(
+        (e) => e.name == map['category'],
+        orElse: () => QuestionCategory.pillars,
+      ),
+      explanation: map['explanation'],
+      coinReward: map['coinReward'] ?? 10,
+    );
   }
 
   @override
@@ -71,12 +105,12 @@ class Stage {
     this.bestScore = 0,
   });
 
-  static const int passingScore = 80;
+  static const int passingScore = 60;
 
   static int calculateStars(int scorePercent) {
     if (scorePercent >= 100) return 3;
-    if (scorePercent >= 90) return 2;
-    if (scorePercent >= 80) return 1;
+    if (scorePercent >= 80) return 2;
+    if (scorePercent >= 60) return 1;
     return 0;
   }
 
@@ -91,6 +125,27 @@ class Stage {
   bool get isUnlocked => status != StageStatus.locked;
   bool get isLocked => status == StageStatus.locked;
   bool get isCompleted => status == StageStatus.completed;
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'stageNumber': stageNumber,
+      'difficulty': difficulty.name,
+      'questionIds': questionIds,
+    };
+  }
+
+  factory Stage.fromMap(Map<String, dynamic> map, String id) {
+    return Stage(
+      id: id,
+      stageNumber: map['stageNumber'] ?? 0,
+      difficulty: Difficulty.values.firstWhere(
+        (e) => e.name == map['difficulty'],
+        orElse: () => Difficulty.easy,
+      ),
+      questionIds: List<String>.from(map['questionIds'] ?? []),
+    );
+  }
 
   Stage copyWith({
     String? id,

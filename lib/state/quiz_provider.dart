@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../data/models/lifeline.dart';
@@ -13,8 +14,10 @@ class QuizNotifier extends Notifier<QuizState> {
   QuizState build() => const QuizState();
 
   // ── Start a new quiz session ──────────────────
-  void startQuiz(Stage stage) {
-    final questions = QuizRepository.instance.getQuestionsForStage(stage);
+  Future<void> startQuiz(Stage stage) async {
+    state = state.copyWith(status: QuizStatus.active); // Loading state if needed
+    
+    final questions = await QuizRepository.instance.getQuestionsForStage(stage);
     // Shuffle so replaying a stage feels fresh
     final shuffled = List<Question>.from(questions)..shuffle();
     state = QuizState(
@@ -197,6 +200,10 @@ class StageProgressState {
     this.easyProgress = const {},
     this.mediumProgress = const {},
     this.hardProgress = const {},
+    this.easyStages = const [],
+    this.mediumStages = const [],
+    this.hardStages = const [],
+    this.isLoading = false,
   });
 
   // Map<stageId, {'stars': int, 'bestScore': int}>
@@ -204,31 +211,49 @@ class StageProgressState {
   final Map<String, Map<String, int>> mediumProgress;
   final Map<String, Map<String, int>> hardProgress;
 
-  Map<String, Map<String, int>> forDifficulty(Difficulty d) {
+  final List<Stage> easyStages;
+  final List<Stage> mediumStages;
+  final List<Stage> hardStages;
+  final bool isLoading;
+
+  List<Stage> forDifficulty(Difficulty d) {
     switch (d) {
-      case Difficulty.easy:   return easyProgress;
-      case Difficulty.medium: return mediumProgress;
-      case Difficulty.hard:   return hardProgress;
+      case Difficulty.easy:   return easyStages;
+      case Difficulty.medium: return mediumStages;
+      case Difficulty.hard:   return hardStages;
     }
   }
 
-  StageProgressState copyWithDifficulty(
-      Difficulty d,
-      Map<String, Map<String, int>> updated,
-      ) {
+  StageProgressState copyWith({
+    Map<String, Map<String, int>>? easyProgress,
+    Map<String, Map<String, int>>? mediumProgress,
+    Map<String, Map<String, int>>? hardProgress,
+    List<Stage>? easyStages,
+    List<Stage>? mediumStages,
+    List<Stage>? hardStages,
+    bool? isLoading,
+  }) {
     return StageProgressState(
-      easyProgress:   d == Difficulty.easy   ? updated : easyProgress,
-      mediumProgress: d == Difficulty.medium ? updated : mediumProgress,
-      hardProgress:   d == Difficulty.hard   ? updated : hardProgress,
+      easyProgress:   easyProgress   ?? this.easyProgress,
+      mediumProgress: mediumProgress ?? this.mediumProgress,
+      hardProgress:   hardProgress   ?? this.hardProgress,
+      easyStages:     easyStages     ?? this.easyStages,
+      mediumStages:   mediumStages   ?? this.mediumStages,
+      hardStages:     hardStages     ?? this.hardStages,
+      isLoading:      isLoading      ?? this.isLoading,
     );
   }
 }
 
 class StageProgressNotifier extends Notifier<StageProgressState> {
+  bool _isLoaded = false;
+
   @override
   StageProgressState build() {
-    _loadAll();
-    return const StageProgressState();
+    if (!_isLoaded) {
+      _loadAll();
+    }
+    return const StageProgressState(isLoading: true);
   }
 
   static const _keyEasy   = 'deen_progress_easy';
@@ -245,74 +270,92 @@ class StageProgressNotifier extends Notifier<StageProgressState> {
 
   // ── Load saved progress from SharedPreferences ─
   Future<void> _loadAll() async {
-    final prefs = await SharedPreferences.getInstance();
+    try {
+      debugPrint('⏳ Loading stage progress and fetching from Firestore...');
+      final prefs = await SharedPreferences.getInstance();
 
-    Map<String, Map<String, int>> decode(String key) {
-      final raw = prefs.getString(key);
-      if (raw == null) return {};
-      try {
-        final decoded = jsonDecode(raw) as Map<String, dynamic>;
-        return decoded.map((k, v) => MapEntry(
-          k,
-          (v as Map<String, dynamic>).map(
-                (ik, iv) => MapEntry(ik, iv as int),
-          ),
-        ));
-      } catch (_) {
-        return {};
+      Map<String, Map<String, int>> decode(String key) {
+        final raw = prefs.getString(key);
+        if (raw == null) return {};
+        try {
+          final decoded = jsonDecode(raw) as Map<String, dynamic>;
+          return decoded.map((k, v) => MapEntry(
+            k,
+            (v as Map<String, dynamic>).map(
+                  (ik, iv) => MapEntry(ik, iv as int),
+            ),
+          ));
+        } catch (_) {
+          return {};
+        }
       }
-    }
 
-    state = StageProgressState(
-      easyProgress:   decode(_keyEasy),
-      mediumProgress: decode(_keyMedium),
-      hardProgress:   decode(_keyHard),
-    );
+      final easyP = decode(_keyEasy);
+      final medP = decode(_keyMedium);
+      final hardP = decode(_keyHard);
+
+      // Fetch stages from Firestore
+      final easyS = await QuizRepository.instance.getStagesWithProgress(Difficulty.easy, easyP);
+      final medS = await QuizRepository.instance.getStagesWithProgress(Difficulty.medium, medP);
+      final hardS = await QuizRepository.instance.getStagesWithProgress(Difficulty.hard, hardP);
+
+      debugPrint('✅ Fetched stages: Easy(${easyS.length}), Med(${medS.length}), Hard(${hardS.length})');
+
+      state = StageProgressState(
+        easyProgress:   easyP,
+        mediumProgress: medP,
+        hardProgress:   hardP,
+        easyStages:     easyS,
+        mediumStages:   medS,
+        hardStages:     hardS,
+        isLoading:      false,
+      );
+      _isLoaded = true;
+    } catch (e) {
+      debugPrint('❌ Error in _loadAll: $e');
+      state = state.copyWith(isLoading: false);
+    }
   }
 
   // ── Save progress after completing a stage ─────
   Future<void> completeStage(Stage stage, int scorePercent) async {
     final stars = Stage.calculateStars(scorePercent);
-    final current = Map<String, Map<String, int>>.from(
-      state.forDifficulty(stage.difficulty),
+    
+    // Get correct progress map
+    final currentProgress = Map<String, Map<String, int>>.from(
+      stage.difficulty == Difficulty.easy ? state.easyProgress :
+      stage.difficulty == Difficulty.medium ? state.mediumProgress : state.hardProgress
     );
 
     // Only update if this is a better score
-    final existing = current[stage.id];
+    final existing = currentProgress[stage.id];
     final existingBest = existing?['bestScore'] ?? 0;
     if (scorePercent >= existingBest) {
-      current[stage.id] = {
+      currentProgress[stage.id] = {
         'stars': stars,
         'bestScore': scorePercent,
       };
     }
 
-    final updated = state.copyWithDifficulty(stage.difficulty, current);
-    state = updated;
-
-    // Persist
+    // Persist to SharedPreferences
     final prefs = await SharedPreferences.getInstance();
-    final encoded = jsonEncode(
-      current.map((k, v) => MapEntry(k, v)),
-    );
+    final encoded = jsonEncode(currentProgress);
     await prefs.setString(_keyFor(stage.difficulty), encoded);
+    
+    debugPrint('Saved progress for ${stage.id}: $encoded');
+
+    // Refresh everything to ensure UI is in sync
+    await _loadAll();
   }
 
-  // ── Get stages with progress applied ──────────
-  List<Stage> getStages(Difficulty difficulty) {
-    return QuizRepository.instance.getStagesWithProgress(
-      difficulty,
-      state.forDifficulty(difficulty),
-    );
-  }
-
-  // ── Clear all progress (for testing) ──────────
+  // ── Clear all progress ──────────
   Future<void> clearAllProgress() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_keyEasy);
     await prefs.remove(_keyMedium);
     await prefs.remove(_keyHard);
-    state = const StageProgressState();
+    _isLoaded = false;
+    state = await build();
   }
 }
 
@@ -321,13 +364,13 @@ NotifierProvider<StageProgressNotifier, StageProgressState>(StageProgressNotifie
 
 /// Convenience provider — get stages for a specific difficulty
 final easyStagesProvider = Provider<List<Stage>>(
-      (ref) => ref.watch(stageProgressProvider.notifier).getStages(Difficulty.easy),
+  (ref) => ref.watch(stageProgressProvider).easyStages,
 );
 
 final mediumStagesProvider = Provider<List<Stage>>(
-      (ref) => ref.watch(stageProgressProvider.notifier).getStages(Difficulty.medium),
+  (ref) => ref.watch(stageProgressProvider).mediumStages,
 );
 
 final hardStagesProvider = Provider<List<Stage>>(
-      (ref) => ref.watch(stageProgressProvider.notifier).getStages(Difficulty.hard),
+  (ref) => ref.watch(stageProgressProvider).hardStages,
 );
