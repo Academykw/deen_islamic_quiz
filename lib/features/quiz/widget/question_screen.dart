@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-
+import '../../../core/services/audio_service.dart';
 import '../../../app/router.dart';
 import '../../../core/constant/app_colors.dart';
 import '../../../core/widgets/coin_badge.dart';
@@ -157,14 +157,24 @@ class _QuestionScreenState extends ConsumerState<QuestionScreen>
 
     // Pause timer
     setState(() => _timerPaused = true);
+    final audio = ref.read(audioServiceProvider);
 
     // Show coin pop if correct
     if (newState.isCorrect) {
       HapticFeedback.mediumImpact();
+      audio.play(SoundEffect.correct);
       final delta = newState.coinsEarned - prevCoins;
       _triggerCoinPop(delta);
+
+      if (delta > 0) {
+        Future.delayed(const Duration(milliseconds: 200), () {
+          audio.play(SoundEffect.coinEarn);
+        });
+      }
+
     } else {
       HapticFeedback.heavyImpact();
+      audio.play(SoundEffect.wrong);
     }
 
     // Auto-advance after 1.4 seconds (if no combo burst showing)
@@ -172,6 +182,8 @@ class _QuestionScreenState extends ConsumerState<QuestionScreen>
       Future.delayed(const Duration(milliseconds: 1400), () {
         if (mounted) _advance();
       });
+    }else {
+      audio.play(SoundEffect.comboBurst);
     }
   }
 
@@ -181,6 +193,13 @@ class _QuestionScreenState extends ConsumerState<QuestionScreen>
 
     if (quizState.status == QuizStatus.complete ||
         quizState.isLastQuestion) {
+
+      ref.read(audioServiceProvider).play(SoundEffect.stageComplete);
+
+      ref.read(coinProvider.notifier).addCoins(quizState.coinsEarned);
+
+
+
       // Save stage progress
       ref.read(stageProgressProvider.notifier).completeStage(
         widget.stage,
@@ -791,6 +810,13 @@ class _LifelineRow extends ConsumerWidget {
 
     // Apply lifeline first to get immediate feedback if possible
     bool usedSuccessfully = false;
+
+    final spent = await ref.read(coinProvider.notifier).spendCoins(
+      lifeline.coinCost,
+    );
+    if (!spent) return;
+
+    ref.read(audioServiceProvider).play(SoundEffect.buttonTap);
 
     switch (lifeline.type) {
       case LifelineType.fiftyFifty:
