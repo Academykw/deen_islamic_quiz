@@ -24,7 +24,10 @@ class UserRepository {
 
     if (updates.isEmpty) return;
 
-    await _firestore.collection('users').doc(uid).update(updates);
+    await _firestore
+        .collection('users')
+        .doc(uid)
+        .set(updates, SetOptions(merge: true));
   }
 
   Future<void> updateStats({

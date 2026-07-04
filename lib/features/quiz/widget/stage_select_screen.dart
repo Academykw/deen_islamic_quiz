@@ -55,6 +55,17 @@ class StageSelectScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(stageProgressProvider);
+    
+    if (state.isLoading) {
+      return const Scaffold(
+        backgroundColor: AppColors.dark,
+        body: Center(
+          child: CircularProgressIndicator(color: AppColors.gold),
+        ),
+      );
+    }
+
     final stages = _getStages(ref);
     final completed = stages.where((s) => s.isCompleted).length;
     final totalStars =
