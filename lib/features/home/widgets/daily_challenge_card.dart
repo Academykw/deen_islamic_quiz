@@ -1,24 +1,26 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constant/app_colors.dart';
 import '../../../core/widgets/gold_button.dart';
+import '../../../state/daily_challenge_provider.dart';
 
-class DailyChallengeCard extends StatefulWidget {
+class DailyChallengeCard extends ConsumerStatefulWidget {
   const DailyChallengeCard({
     super.key,
     required this.onTap,
-    this.isCompleted = false,
   });
 
   final VoidCallback onTap;
-  final bool isCompleted;
 
   @override
-  State<DailyChallengeCard> createState() => _DailyChallengeCardState();
+  ConsumerState<DailyChallengeCard> createState() =>
+      _DailyChallengeCardState();
 }
 
-class _DailyChallengeCardState extends State<DailyChallengeCard> {
+class _DailyChallengeCardState
+    extends ConsumerState<DailyChallengeCard> {
   late Timer _timer;
   late Duration _timeLeft;
 
@@ -26,11 +28,13 @@ class _DailyChallengeCardState extends State<DailyChallengeCard> {
   void initState() {
     super.initState();
     _timeLeft = _timeUntilMidnight();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) {
-        setState(() => _timeLeft = _timeUntilMidnight());
-      }
-    });
+    _timer =
+        Timer.periodic(const Duration(seconds: 1), (_) {
+          if (mounted) {
+            setState(
+                    () => _timeLeft = _timeUntilMidnight());
+          }
+        });
   }
 
   @override
@@ -48,17 +52,26 @@ class _DailyChallengeCardState extends State<DailyChallengeCard> {
 
   String _format(Duration d) {
     final h = d.inHours.toString().padLeft(2, '0');
-    final m = (d.inMinutes % 60).toString().padLeft(2, '0');
-    final s = (d.inSeconds % 60).toString().padLeft(2, '0');
+    final m =
+    (d.inMinutes % 60).toString().padLeft(2, '0');
+    final s =
+    (d.inSeconds % 60).toString().padLeft(2, '0');
     return '$h:$m:$s';
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final state = ref.watch(dailyChallengeProvider);
+
+    if (state.isLoading) {
+      return _LoadingCard();
+    }
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: widget.isCompleted
+          colors: state.isCompleted
               ? [AppColors.darkPanel, AppColors.darkCard]
               : [
             AppColors.emerald.withOpacity(0.25),
@@ -69,7 +82,7 @@ class _DailyChallengeCardState extends State<DailyChallengeCard> {
         ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: widget.isCompleted
+          color: state.isCompleted
               ? AppColors.darkBorder
               : AppColors.emeraldLight.withOpacity(0.4),
           width: 1.5,
@@ -80,22 +93,25 @@ class _DailyChallengeCardState extends State<DailyChallengeCard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Header row ─────────────────────
+            // ── Header row ──────────────────────
             Row(
               children: [
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: widget.isCompleted
+                    color: state.isCompleted
                         ? AppColors.darkBorder
-                        : AppColors.emerald.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(10),
+                        : AppColors.emerald
+                        .withOpacity(0.3),
+                    borderRadius:
+                    BorderRadius.circular(10),
                   ),
                   child: Icon(
-                    widget.isCompleted
+                    state.isCompleted
                         ? Icons.check_circle_rounded
-                        : Icons.local_fire_department_rounded,
-                    color: widget.isCompleted
+                        : Icons
+                        .local_fire_department_rounded,
+                    color: state.isCompleted
                         ? AppColors.textMuted
                         : AppColors.emeraldLight,
                     size: 22,
@@ -104,7 +120,8 @@ class _DailyChallengeCardState extends State<DailyChallengeCard> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment:
+                    CrossAxisAlignment.start,
                     children: [
                       const Text(
                         'Daily Challenge',
@@ -116,9 +133,9 @@ class _DailyChallengeCardState extends State<DailyChallengeCard> {
                         ),
                       ),
                       Text(
-                        widget.isCompleted
-                            ? 'Come back tomorrow'
-                            : '10 questions · 2× coins',
+                        state.isCompleted
+                            ? 'Completed today · Come back tomorrow'
+                            : '10 questions · 2× coin reward',
                         style: const TextStyle(
                           fontFamily: 'Tajawal',
                           fontSize: 12,
@@ -128,10 +145,11 @@ class _DailyChallengeCardState extends State<DailyChallengeCard> {
                     ],
                   ),
                 ),
-                // Countdown
-                if (!widget.isCompleted)
+                // Countdown timer
+                if (!state.isCompleted)
                   Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
+                    crossAxisAlignment:
+                    CrossAxisAlignment.end,
                     children: [
                       const Text(
                         'Resets in',
@@ -155,10 +173,34 @@ class _DailyChallengeCardState extends State<DailyChallengeCard> {
               ],
             ),
 
-            if (!widget.isCompleted) ...[
-              const SizedBox(height: 16),
+            // ── Streak + stats row ───────────────
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                _StatChip(
+                  icon: Icons.whatshot_rounded,
+                  label:
+                  '${state.dailyStreak} day streak',
+                  color: state.dailyStreak >= 7
+                      ? AppColors.hard
+                      : state.dailyStreak >= 3
+                      ? AppColors.gold
+                      : AppColors.emeraldLight,
+                ),
+                const SizedBox(width: 8),
+                _StatChip(
+                  icon: Icons.event_available_rounded,
+                  label:
+                  '${state.totalCompleted} completed',
+                  color: AppColors.lifelineBlue,
+                ),
+              ],
+            ),
 
-              // ── Reward chips ───────────────────
+            if (!state.isCompleted) ...[
+              const SizedBox(height: 14),
+
+              // Reward chips
               Row(
                 children: [
                   _RewardChip(
@@ -168,14 +210,14 @@ class _DailyChallengeCardState extends State<DailyChallengeCard> {
                   ),
                   const SizedBox(width: 8),
                   _RewardChip(
-                    icon: Icons.emoji_events_rounded,
-                    label: 'Leaderboard XP',
+                    icon: Icons.bolt_rounded,
+                    label: '2× multiplier',
                     color: AppColors.gold,
                   ),
                 ],
               ),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: 14),
 
               GoldButton(
                 label: 'Start Challenge',
@@ -184,8 +226,62 @@ class _DailyChallengeCardState extends State<DailyChallengeCard> {
                 icon: Icons.play_arrow_rounded,
               ),
             ],
+
+            // ── Completed state ──────────────────
+            if (state.isCompleted) ...[
+              const SizedBox(height: 14),
+              _CompletedBanner(
+                score: state.todayChallenge?.score ?? 0,
+                coinsEarned:
+                state.todayChallenge?.coinsEarned ??
+                    0,
+                timeLeft: _format(_timeLeft),
+              ),
+            ],
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _StatChip extends StatelessWidget {
+  const _StatChip({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+          horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+        border:
+        Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: color, size: 13),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: TextStyle(
+              fontFamily: 'Tajawal',
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: color,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -205,11 +301,13 @@ class _RewardChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      padding: const EdgeInsets.symmetric(
+          horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border:
+        Border.all(color: color.withOpacity(0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -226,6 +324,87 @@ class _RewardChip extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _CompletedBanner extends StatelessWidget {
+  const _CompletedBanner({
+    required this.score,
+    required this.coinsEarned,
+    required this.timeLeft,
+  });
+
+  final int score;
+  final int coinsEarned;
+  final String timeLeft;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.emerald.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+            color: AppColors.emeraldLight
+                .withOpacity(0.3)),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.check_circle_rounded,
+            color: AppColors.emeraldLight,
+            size: 18,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment:
+              CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Score: $score/10 · Earned $coinsEarned coins',
+                  style: const TextStyle(
+                    fontFamily: 'Tajawal',
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.emeraldLight,
+                  ),
+                ),
+                Text(
+                  'Next challenge in $timeLeft',
+                  style: const TextStyle(
+                    fontFamily: 'Tajawal',
+                    fontSize: 11,
+                    color: AppColors.textMuted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LoadingCard extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 100,
+      decoration: BoxDecoration(
+        color: AppColors.darkCard,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.darkBorder),
+      ),
+      child: const Center(
+        child: CircularProgressIndicator(
+          color: AppColors.gold,
+          strokeWidth: 2,
+        ),
       ),
     );
   }
