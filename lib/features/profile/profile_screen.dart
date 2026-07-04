@@ -1,7 +1,8 @@
+import 'package:deen_iq/features/profile/widgets/settings_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-
+import '../../state/daily_challenge_provider.dart';
 import '../../core/constant/app_colors.dart';
 import '../../core/widgets/coin_badge.dart';
 import '../../core/widgets/geo_background.dart';
@@ -136,6 +137,7 @@ class _ProfileScreenState
   Widget build(BuildContext context) {
     final userAsync = ref.watch(userProfileProvider);
     final coins = ref.watch(coinProvider);
+    final dailyState = ref.watch(dailyChallengeProvider);
 
     return userAsync.when(
       loading: () => const Scaffold(
@@ -162,6 +164,7 @@ class _ProfileScreenState
           totalCorrect: user.totalCorrect,
           bestStreak: user.bestStreak,
           coins: coins,
+          totalCompleted: dailyState.totalCompleted,
         );
 
         final unlockedCount = achievements.where((a) => a.isUnlocked).length;
@@ -199,8 +202,10 @@ class _ProfileScreenState
                                 onSelected: _updateAvatar,
                               ),
                             ),
-                            onEditName: () =>
-                                setState(() => _isEditingName = true),
+                            onEditName: () {
+                              _nameCtrl.text = user.displayName;
+                              setState(() => _isEditingName = true);
+                            },
                             onSaveName: _saveDisplayName,
                             onCancelEdit: () =>
                                 setState(() => _isEditingName = false),
@@ -310,10 +315,17 @@ class _ProfileAppBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(
-          horizontal: 20, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       child: Row(
         children: [
+          IconButton(
+            onPressed: () => context.pop(),
+            icon: const Icon(
+              Icons.arrow_back_ios_rounded,
+              color: AppColors.textSecondary,
+              size: 20,
+            ),
+          ),
           const Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -339,10 +351,21 @@ class _ProfileAppBar extends StatelessWidget {
           ),
           const Spacer(),
           IconButton(
-            onPressed: onSignOut,
-            icon: const Icon(Icons.logout_rounded, color: AppColors.textSecondary),
+            onPressed: () => showModalBottomSheet(
+              context: context,
+              backgroundColor: AppColors.transparent,
+              builder: (_) => const SettingsSheet(),
+            ),
+            icon: const Icon(
+              Icons.settings_outlined,
+              color: AppColors.textSecondary,
+              size: 22,
+            ),
           ),
+          const SizedBox(width: 4),
           const CoinBadge(size: CoinBadgeSize.small),
+
+
         ],
       ),
     );

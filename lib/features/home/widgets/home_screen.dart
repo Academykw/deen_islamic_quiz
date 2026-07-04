@@ -9,6 +9,8 @@ import '../../../core/constant/app_colors.dart';
 import '../../../core/widgets/bottom_nav_bar.dart';
 import '../../../core/widgets/coin_badge.dart';
 import '../../../core/widgets/geo_background.dart';
+import '../../../core/widgets/gold_button.dart';
+import '../../../data/services/migration_service.dart';
 import '../../../state/coin_provider.dart';
 import '../../../state/quiz_provider.dart';
 import 'daily_challenge_card.dart';
@@ -81,7 +83,7 @@ class HomeScreen extends ConsumerWidget {
 
                         // Daily challenge card
                         DailyChallengeCard(
-                          onTap: () => context.pushNamed(Routes.difficulty),
+                          onTap: () => context.pushNamed(Routes.dailyChallenge),
                         ),
 
                         const SizedBox(height: 24),
@@ -117,7 +119,7 @@ class HomeScreen extends ConsumerWidget {
               context.pushNamed(Routes.leaderboard);
               break;
             case 2:
-              context.goNamed(Routes.profile);
+              context.pushNamed(Routes.profile);
               break;
             case 3:
             // Redeem — Phase 3
