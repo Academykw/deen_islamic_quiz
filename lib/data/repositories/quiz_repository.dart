@@ -1,72 +1,70 @@
-import '../local/question_seed.dart';
-
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/quiz_model.dart';
-
-
-import '../models/stages_seed.dart';
 
 class QuizRepository {
   QuizRepository._();
   static final QuizRepository instance = QuizRepository._();
 
+  final _db = FirebaseFirestore.instance;
+
   // ── Questions ──────────────────────────────────────────────────
 
-  /// All questions as a lookup map
-  late final Map<String, Question> _questionMap = {
-    for (final q in kSeedQuestions) q.id: q,
-  };
+  /// Get a single question by ID from Firestore
+  Future<Question?> getQuestion(String id) async {
+    final doc = await _db.collection('questions').doc(id).get();
+    if (!doc.exists) return null;
+    return Question.fromMap(doc.data()!, doc.id);
+  }
 
-  /// Get a single question by ID
-  Question? getQuestion(String id) => _questionMap[id];
+  /// Get multiple questions by their IDs
+  Future<List<Question>> getQuestionsByIds(List<String> ids) async {
+    if (ids.isEmpty) return [];
+    
+    // Firestore 'in' query supports up to 10-30 items depending on size
+    // For stages of 5-10 questions, this is perfect.
+    final snapshot = await _db
+        .collection('questions')
+        .where(FieldPath.documentId, whereIn: ids)
+        .get();
+
+    final questions = snapshot.docs
+        .map((doc) => Question.fromMap(doc.data(), doc.id))
+        .toList();
+        
+    // Order them as requested in the 'ids' list
+    return ids
+        .map((id) => questions.firstWhere((q) => q.id == id))
+        .toList();
+  }
 
   /// Get all questions for a stage (ordered)
-  List<Question> getQuestionsForStage(Stage stage) {
-    return stage.questionIds
-        .map((id) => _questionMap[id])
-        .whereType<Question>()
-        .toList();
-  }
-
-  /// Get questions filtered by difficulty
-  List<Question> getQuestionsByDifficulty(Difficulty difficulty) {
-    return kSeedQuestions
-        .where((q) => q.difficulty == difficulty)
-        .toList();
-  }
-
-  /// Get 10 random questions for daily challenge
-  List<Question> getDailyChallengeQuestions() {
-    final all = List<Question>.from(kSeedQuestions)..shuffle();
-    return all.take(10).toList();
+  Future<List<Question>> getQuestionsForStage(Stage stage) async {
+    return getQuestionsByIds(stage.questionIds);
   }
 
   // ── Stages ────────────────────────────────────────────────────
 
-  /// Get all stages for a difficulty
-  List<Stage> getStages(Difficulty difficulty) {
-    switch (difficulty) {
-      case Difficulty.easy:   return kEasyStages;
-      case Difficulty.medium: return kMediumStages;
-      case Difficulty.hard:   return kHardStages;
-    }
-  }
+  /// Get all stages for a difficulty from Firestore
+  Future<List<Stage>> getStages(Difficulty difficulty) async {
+    final snapshot = await _db
+        .collection('stages')
+        .where('difficulty', isEqualTo: difficulty.name)
+        .orderBy('stageNumber')
+        .get();
 
-  /// Get a specific stage
-  Stage? getStage(Difficulty difficulty, int stageNumber) {
-    return getStages(difficulty)
-        .where((s) => s.stageNumber == stageNumber)
-        .firstOrNull;
+    return snapshot.docs
+        .map((doc) => Stage.fromMap(doc.data(), doc.id))
+        .toList();
   }
 
   // ── Progress helpers ──────────────────────────────────────────
 
-  /// Merge saved progress (from SharedPreferences) with seed stages
-  /// progressMap: { 'easy_s1': {'stars': 3, 'bestScore': 95}, ... }
-  List<Stage> getStagesWithProgress(
+  /// Merge saved progress (from SharedPreferences) with Firestore stages
+  Future<List<Stage>> getStagesWithProgress(
       Difficulty difficulty,
       Map<String, Map<String, int>> progressMap,
-      ) {
-    final stages = getStages(difficulty);
+      ) async {
+    final stages = await getStages(difficulty);
     final result = <Stage>[];
 
     for (int i = 0; i < stages.length; i++) {

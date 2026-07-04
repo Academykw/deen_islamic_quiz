@@ -51,6 +51,14 @@ class _ResultScreenState extends ConsumerState<ResultScreen>
     _finalState = ref.read(quizProvider);
     _stars = Stage.calculateStars(_finalState.scorePercent);
 
+    // Save progress if passed
+    if (_finalState.isPassing) {
+      ref.read(stageProgressProvider.notifier).completeStage(
+            widget.stage,
+            _finalState.scorePercent,
+          );
+    }
+
     // Sync stats to Firestore
     _syncStats();
 
@@ -245,9 +253,7 @@ class _ResultScreenState extends ConsumerState<ResultScreen>
   }
 
   void _goNext() {
-    final stages = ref
-        .read(stageProgressProvider.notifier)
-        .getStages(_difficulty);
+    final stages = ref.read(stageProgressProvider).forDifficulty(_difficulty);
     
     final nextStage = stages.firstWhere(
           (s) => s.stageNumber == widget.stage.stageNumber + 1,

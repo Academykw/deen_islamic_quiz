@@ -9,6 +9,8 @@ import '../features/auth/register_screen.dart';
 import '../features/home/widgets/home_screen.dart';
 import '../features/leaderboard/leaderboard_screen.dart';
 import '../features/profile/profile_screen.dart';
+import '../features/quiz/daily_question_screen.dart';
+import '../features/quiz/daily_result_screen.dart';
 import '../features/quiz/widget/question_screen.dart';
 import '../features/quiz/widget/stage_select_screen.dart';
 import '../features/splash/splash_screen.dart';
@@ -28,6 +30,8 @@ class Routes {
   static const result = 'result';
   static const leaderboard = 'leaderboard';
   static const profile = 'profile';
+  static const dailyChallenge = 'dailyChallenge';
+  static const dailyResult    = 'dailyResult';
 
 }
 
@@ -44,6 +48,8 @@ class RoutePaths {
   static const result = '/result';
   static const leaderboard = '/leaderboard';
   static const profile = '/profile';
+  static const dailyChallenge = '/daily';
+  static const dailyResult    = '/daily/result';
 }
 
 // ── Extra objects passed via GoRouter extra ────
@@ -114,6 +120,28 @@ final routerProvider = Provider<GoRouter>((ref) {
           const RegisterScreen(),
         ),
       ),
+
+      GoRoute(
+        path: RoutePaths.dailyChallenge,
+        name: Routes.dailyChallenge,
+        pageBuilder: (context, state) => _buildFade(
+          state,
+          const AuthGate(child: DailyQuestionScreen()),
+        ),
+      ),
+
+      GoRoute(
+        path: RoutePaths.dailyResult,
+        name: Routes.dailyResult,
+        pageBuilder: (context, state) {
+          final extra = state.extra as DailyResultExtra;
+          return _buildFade(
+            state,
+            DailyResultScreen(extra: extra),
+          );
+        },
+      ),
+
 
       // ── Home ────────────────────────────────
       GoRoute(
