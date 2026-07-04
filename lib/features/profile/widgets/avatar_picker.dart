@@ -41,7 +41,7 @@ class _AvatarPickerState extends State<AvatarPicker> {
       decoration: BoxDecoration(
         color: AppColors.darkCard,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.gold.withOpacity(0.3)),
+        border: Border.all(color: AppColors.gold.withValues(alpha: 0.3)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -74,7 +74,7 @@ class _AvatarPickerState extends State<AvatarPicker> {
             width: 72, height: 72,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: AppColors.gold.withOpacity(0.1),
+              color: AppColors.gold.withValues(alpha: 0.1),
               border: Border.all(color: AppColors.gold, width: 2),
             ),
             child: Center(
@@ -109,7 +109,7 @@ class _AvatarPickerState extends State<AvatarPicker> {
                   duration: const Duration(milliseconds: 200),
                   decoration: BoxDecoration(
                     color: isSelected
-                        ? AppColors.gold.withOpacity(0.15)
+                        ? AppColors.gold.withValues(alpha: 0.15)
                         : AppColors.darkPanel,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(

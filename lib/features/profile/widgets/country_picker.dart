@@ -107,7 +107,7 @@ class _CountryPickerState extends State<CountryPicker> {
         color: AppColors.darkCard,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-            color: AppColors.gold.withOpacity(0.3)),
+            color: AppColors.gold.withValues(alpha: 0.3)),
       ),
       child: Column(
         children: [
