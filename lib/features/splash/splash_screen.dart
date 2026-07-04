@@ -81,7 +81,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     _subController.forward();
 
     // Navigate to appropriate screen after splash
-    await Future.delayed(const Duration(milliseconds: 1800));
+   /* await Future.delayed(const Duration(milliseconds: 1800));
     if (mounted) {
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
@@ -89,7 +89,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       } else {
         context.goNamed(Routes.login);
       }
-    }
+    }*/
   }
 
   @override
