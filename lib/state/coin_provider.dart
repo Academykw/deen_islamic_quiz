@@ -1,51 +1,41 @@
+import 'dart:async';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
-// ─────────────────────────────────────────────
-// COIN PROVIDER
-// Holds total coin balance, persists automatically
-// ─────────────────────────────────────────────
-
+/// Read-only view of the server wallet. The device never calculates, persists,
+/// or writes an authoritative balance.
 class CoinNotifier extends Notifier<int> {
+  StreamSubscription<User?>? _authSubscription;
+  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>?
+  _walletSubscription;
+
   @override
   int build() {
-    _loadCoins();
-    return 0; // Default until loaded
-  }
-
-  static const _key = 'deen_coins';
-
-  // ── Load saved balance ─────────────────────────
-  Future<void> _loadCoins() async {
-    final prefs = await SharedPreferences.getInstance();
-    state = prefs.getInt(_key) ?? 200; // Give 200 welcome coins
-  }
-
-  // ── Add coins (after correct answer / session) ─
-  Future<void> addCoins(int amount) async {
-    if (amount <= 0) return;
-    state = state + amount;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(_key, state);
-  }
-
-  // ── Spend coins (lifelines in Phase 2) ────────
-  Future<bool> spendCoins(int amount) async {
-    if (amount <= 0) return false;
-    if (state < amount) return false; // Not enough coins
-    state = state - amount;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(_key, state);
-    return true;
-  }
-
-  // ── Reset (testing only) ──────────────────────
-  Future<void> resetCoins() async {
-    state = 0;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(_key, 0);
+    _authSubscription = FirebaseAuth.instance.authStateChanges().listen((user) {
+      _walletSubscription?.cancel();
+      if (user == null) {
+        state = 0;
+        return;
+      }
+      _walletSubscription = FirebaseFirestore.instance
+          .collection('wallets')
+          .doc(user.uid)
+          .snapshots()
+          .listen((snapshot) {
+            final wallet = snapshot.data();
+            final earned = wallet?['balance'];
+            final bonus = wallet?['bonusBalance'];
+            state = (earned is int ? earned : 0) + (bonus is int ? bonus : 0);
+          });
+    });
+    ref.onDispose(() {
+      _authSubscription?.cancel();
+      _walletSubscription?.cancel();
+    });
+    return 0;
   }
 }
 
-/// Watch this in any widget that displays coin balance
 final coinProvider = NotifierProvider<CoinNotifier, int>(CoinNotifier.new);

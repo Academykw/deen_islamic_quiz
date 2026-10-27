@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-
 class DailyChallenge {
   const DailyChallenge({
     required this.date,
@@ -35,8 +34,7 @@ class DailyChallenge {
   factory DailyChallenge.fromMap(Map<String, dynamic> map) {
     return DailyChallenge(
       date: map['date'] ?? '',
-      questionIds: List<String>.from(
-          map['questionIds'] ?? []),
+      questionIds: List<String>.from(map['questionIds'] ?? []),
       isCompleted: map['isCompleted'] ?? false,
       score: map['score'] ?? 0,
       coinsEarned: map['coinsEarned'] ?? 0,
@@ -64,7 +62,7 @@ class DailyChallenge {
 
   /// Today's date key
   static String todayKey() {
-    final now = DateTime.now();
+    final now = DateTime.now().toUtc();
     return '${now.year}-'
         '${now.month.toString().padLeft(2, '0')}-'
         '${now.day.toString().padLeft(2, '0')}';

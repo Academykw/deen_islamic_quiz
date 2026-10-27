@@ -7,20 +7,15 @@ import '../../../core/widgets/gold_button.dart';
 import '../../../state/daily_challenge_provider.dart';
 
 class DailyChallengeCard extends ConsumerStatefulWidget {
-  const DailyChallengeCard({
-    super.key,
-    required this.onTap,
-  });
+  const DailyChallengeCard({super.key, required this.onTap});
 
   final VoidCallback onTap;
 
   @override
-  ConsumerState<DailyChallengeCard> createState() =>
-      _DailyChallengeCardState();
+  ConsumerState<DailyChallengeCard> createState() => _DailyChallengeCardState();
 }
 
-class _DailyChallengeCardState
-    extends ConsumerState<DailyChallengeCard> {
+class _DailyChallengeCardState extends ConsumerState<DailyChallengeCard> {
   late Timer _timer;
   late Duration _timeLeft;
 
@@ -28,13 +23,11 @@ class _DailyChallengeCardState
   void initState() {
     super.initState();
     _timeLeft = _timeUntilMidnight();
-    _timer =
-        Timer.periodic(const Duration(seconds: 1), (_) {
-          if (mounted) {
-            setState(
-                    () => _timeLeft = _timeUntilMidnight());
-          }
-        });
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) {
+        setState(() => _timeLeft = _timeUntilMidnight());
+      }
+    });
   }
 
   @override
@@ -44,18 +37,15 @@ class _DailyChallengeCardState
   }
 
   Duration _timeUntilMidnight() {
-    final now = DateTime.now();
-    final midnight =
-    DateTime(now.year, now.month, now.day + 1);
+    final now = DateTime.now().toUtc();
+    final midnight = DateTime.utc(now.year, now.month, now.day + 1);
     return midnight.difference(now);
   }
 
   String _format(Duration d) {
     final h = d.inHours.toString().padLeft(2, '0');
-    final m =
-    (d.inMinutes % 60).toString().padLeft(2, '0');
-    final s =
-    (d.inSeconds % 60).toString().padLeft(2, '0');
+    final m = (d.inMinutes % 60).toString().padLeft(2, '0');
+    final s = (d.inSeconds % 60).toString().padLeft(2, '0');
     return '$h:$m:$s';
   }
 
@@ -73,10 +63,7 @@ class _DailyChallengeCardState
         gradient: LinearGradient(
           colors: state.isCompleted
               ? [AppColors.darkPanel, AppColors.darkCard]
-              : [
-            AppColors.emerald.withOpacity(0.25),
-            AppColors.darkCard,
-          ],
+              : [AppColors.emerald.withValues(alpha: 0.25), AppColors.darkCard],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -84,7 +71,7 @@ class _DailyChallengeCardState
         border: Border.all(
           color: state.isCompleted
               ? AppColors.darkBorder
-              : AppColors.emeraldLight.withOpacity(0.4),
+              : AppColors.emeraldLight.withValues(alpha: 0.4),
           width: 1.5,
         ),
       ),
@@ -101,16 +88,13 @@ class _DailyChallengeCardState
                   decoration: BoxDecoration(
                     color: state.isCompleted
                         ? AppColors.darkBorder
-                        : AppColors.emerald
-                        .withOpacity(0.3),
-                    borderRadius:
-                    BorderRadius.circular(10),
+                        : AppColors.emerald.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
                     state.isCompleted
                         ? Icons.check_circle_rounded
-                        : Icons
-                        .local_fire_department_rounded,
+                        : Icons.local_fire_department_rounded,
                     color: state.isCompleted
                         ? AppColors.textMuted
                         : AppColors.emeraldLight,
@@ -120,8 +104,7 @@ class _DailyChallengeCardState
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
-                    crossAxisAlignment:
-                    CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
                         'Daily Challenge',
@@ -134,8 +117,8 @@ class _DailyChallengeCardState
                       ),
                       Text(
                         state.isCompleted
-                            ? 'Completed today · Come back tomorrow'
-                            : '10 questions · 2× coin reward',
+                            ? 'Completed today • Come back tomorrow'
+                            : '10 questions • 2× Acoin reward',
                         style: const TextStyle(
                           fontFamily: 'Tajawal',
                           fontSize: 12,
@@ -148,8 +131,7 @@ class _DailyChallengeCardState
                 // Countdown timer
                 if (!state.isCompleted)
                   Column(
-                    crossAxisAlignment:
-                    CrossAxisAlignment.end,
+                    crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       const Text(
                         'Resets in',
@@ -179,8 +161,7 @@ class _DailyChallengeCardState
               children: [
                 _StatChip(
                   icon: Icons.whatshot_rounded,
-                  label:
-                  '${state.dailyStreak} day streak',
+                  label: '${state.dailyStreak} day streak',
                   color: state.dailyStreak >= 7
                       ? AppColors.hard
                       : state.dailyStreak >= 3
@@ -190,8 +171,7 @@ class _DailyChallengeCardState
                 const SizedBox(width: 8),
                 _StatChip(
                   icon: Icons.event_available_rounded,
-                  label:
-                  '${state.totalCompleted} completed',
+                  label: '${state.totalCompleted} completed',
                   color: AppColors.lifelineBlue,
                 ),
               ],
@@ -205,7 +185,7 @@ class _DailyChallengeCardState
                 children: [
                   _RewardChip(
                     icon: Icons.monetization_on_rounded,
-                    label: '+500 coins',
+                    label: 'Server-calculated coins',
                     color: AppColors.coin,
                   ),
                   const SizedBox(width: 8),
@@ -232,9 +212,7 @@ class _DailyChallengeCardState
               const SizedBox(height: 14),
               _CompletedBanner(
                 score: state.todayChallenge?.score ?? 0,
-                coinsEarned:
-                state.todayChallenge?.coinsEarned ??
-                    0,
+                coinsEarned: state.todayChallenge?.coinsEarned ?? 0,
                 timeLeft: _format(_timeLeft),
               ),
             ],
@@ -259,13 +237,11 @@ class _StatChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(
-          horizontal: 10, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
-        border:
-        Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -301,13 +277,11 @@ class _RewardChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(
-          horizontal: 10, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
-        border:
-        Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -345,11 +319,11 @@ class _CompletedBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.emerald.withOpacity(0.08),
+        color: AppColors.emerald.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-            color: AppColors.emeraldLight
-                .withOpacity(0.3)),
+          color: AppColors.emeraldLight.withValues(alpha: 0.3),
+        ),
       ),
       child: Row(
         children: [
@@ -361,11 +335,10 @@ class _CompletedBanner extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Column(
-              crossAxisAlignment:
-              CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Score: $score/10 · Earned $coinsEarned coins',
+                  'Score: $score/10 • Earned $coinsEarned Acoins',
                   style: const TextStyle(
                     fontFamily: 'Tajawal',
                     fontSize: 13,
@@ -401,10 +374,7 @@ class _LoadingCard extends StatelessWidget {
         border: Border.all(color: AppColors.darkBorder),
       ),
       child: const Center(
-        child: CircularProgressIndicator(
-          color: AppColors.gold,
-          strokeWidth: 2,
-        ),
+        child: CircularProgressIndicator(color: AppColors.gold, strokeWidth: 2),
       ),
     );
   }
