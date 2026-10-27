@@ -12,15 +12,14 @@ import '../../core/widgets/geo_background.dart';
 import '../../data/models/quiz_model.dart';
 import '../../state/quiz_provider.dart';
 
-
 class DifficultyScreen extends ConsumerWidget {
   const DifficultyScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final easyStages  = ref.watch(easyStagesProvider);
+    final easyStages = ref.watch(easyStagesProvider);
     final mediumStages = ref.watch(mediumStagesProvider);
-    final hardStages  = ref.watch(hardStagesProvider);
+    final hardStages = ref.watch(hardStagesProvider);
 
     // Total stats across all difficulties
     final allStages = [...easyStages, ...mediumStages, ...hardStages];
@@ -36,7 +35,6 @@ class DifficultyScreen extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-
                 // ── App Bar ───────────────────────
                 _DifficultyAppBar(),
 
@@ -72,7 +70,8 @@ class DifficultyScreen extends ConsumerWidget {
                         children: [
                           _SummaryChip(
                             icon: Icons.layers_rounded,
-                            label: '$totalCompleted / ${allStages.length} Stages',
+                            label:
+                                '$totalCompleted / ${allStages.length} Stages',
                             color: AppColors.emeraldLight,
                           ),
                           const SizedBox(width: 10),
@@ -101,8 +100,7 @@ class DifficultyScreen extends ConsumerWidget {
                           onTap: () {
                             // Navigate to stage select — wired in Step 10
                             // context.go('/stages/easy');
-                            _navigateToStages(
-                                context, Difficulty.easy);
+                            _navigateToStages(context, Difficulty.easy);
                           },
                         ),
                         const SizedBox(height: 14),
@@ -110,8 +108,7 @@ class DifficultyScreen extends ConsumerWidget {
                           difficulty: Difficulty.medium,
                           stages: mediumStages,
                           onTap: () {
-                            _navigateToStages(
-                                context, Difficulty.medium);
+                            _navigateToStages(context, Difficulty.medium);
                           },
                         ),
                         const SizedBox(height: 14),
@@ -119,8 +116,7 @@ class DifficultyScreen extends ConsumerWidget {
                           difficulty: Difficulty.hard,
                           stages: hardStages,
                           onTap: () {
-                            _navigateToStages(
-                                context, Difficulty.hard);
+                            _navigateToStages(context, Difficulty.hard);
                           },
                         ),
 
@@ -166,7 +162,7 @@ class _DifficultyAppBar extends StatelessWidget {
           ),
           const Spacer(),
           const Text(
-            'DEEN',
+            'DEEN IQ',
             style: TextStyle(
               fontFamily: 'Tajawal',
               fontSize: 14,
@@ -258,7 +254,7 @@ class _CoinInfoBanner extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Earn Real Coins',
+                  'Verified Acoin rewards',
                   style: TextStyle(
                     fontFamily: 'Tajawal',
                     fontSize: 13,
@@ -268,7 +264,7 @@ class _CoinInfoBanner extends StatelessWidget {
                 ),
                 SizedBox(height: 2),
                 Text(
-                  'Answer correctly to earn coins. Streak bonuses give 1.5× – 2× rewards. Redeem for real money!',
+                  'Answer correctly to earn Acoins. Streak bonuses can increase rewards, and every balance update is verified securely.',
                   style: TextStyle(
                     fontFamily: 'Tajawal',
                     fontSize: 11,
@@ -284,4 +280,3 @@ class _CoinInfoBanner extends StatelessWidget {
     );
   }
 }
-
