@@ -59,72 +59,76 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> {
                   child: state.isLoading
                       ? const _LoadingView()
                       : state.error != null
-                          ? _ErrorView(
-                              message: state.error!,
-                              onRetry: () =>
-                                  ref.read(leaderboardProvider.notifier).refresh(),
-                            )
-                          : state.entries.isEmpty
-                              ? const _EmptyView()
-                              : RefreshIndicator(
-                                  color: AppColors.gold,
-                                  backgroundColor: AppColors.darkCard,
-                                  onRefresh: () async {
-                                    ref
-                                        .read(leaderboardProvider.notifier)
-                                        .refresh();
-                                  },
-                                  child: CustomScrollView(
-                                    slivers: [
-                                      SliverPadding(
-                                        padding: const EdgeInsets.fromLTRB(
-                                            20, 8, 20, 0),
-                                        sliver: SliverList(
-                                          delegate: SliverChildListDelegate([
-                                            // Podium
-                                            PodiumWidget(
-                                              topThree: state.topThree,
-                                              currentUid: currentUid,
-                                            ),
-
-                                            const SizedBox(height: 20),
-
-                                            // Your rank card
-                                            if (state.currentUserRank > 0) ...[
-                                              YourRankCard(
-                                                rank: state.currentUserRank,
-                                                entry: state.currentUserEntry,
-                                              ),
-                                              const SizedBox(height: 16),
-                                            ],
-
-                                            // Section label
-                                            const _SectionLabel(
-                                                text: 'RANKINGS'),
-                                            const SizedBox(height: 10),
-                                          ]),
-                                        ),
-                                      ),
-
-                                      // Rest of list
-                                      SliverPadding(
-                                        padding: const EdgeInsets.fromLTRB(
-                                            20, 0, 20, 80),
-                                        sliver: SliverList.builder(
-                                          itemCount: state.restOfList.length,
-                                          itemBuilder: (_, i) {
-                                            final entry = state.restOfList[i];
-                                            return LeaderboardRow(
-                                              entry: entry,
-                                              isCurrentUser:
-                                                  entry.uid == currentUid,
-                                            );
-                                          },
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+                      ? _ErrorView(
+                          message: state.error!,
+                          onRetry: () =>
+                              ref.read(leaderboardProvider.notifier).refresh(),
+                        )
+                      : state.entries.isEmpty
+                      ? const _EmptyView()
+                      : RefreshIndicator(
+                          color: AppColors.gold,
+                          backgroundColor: AppColors.darkCard,
+                          onRefresh: () async {
+                            ref.read(leaderboardProvider.notifier).refresh();
+                          },
+                          child: CustomScrollView(
+                            slivers: [
+                              SliverPadding(
+                                padding: const EdgeInsets.fromLTRB(
+                                  20,
+                                  8,
+                                  20,
+                                  0,
                                 ),
+                                sliver: SliverList(
+                                  delegate: SliverChildListDelegate([
+                                    // Podium
+                                    PodiumWidget(
+                                      topThree: state.topThree,
+                                      currentUid: currentUid,
+                                    ),
+
+                                    const SizedBox(height: 20),
+
+                                    // Your rank card
+                                    if (state.currentUserRank > 0) ...[
+                                      YourRankCard(
+                                        rank: state.currentUserRank,
+                                        entry: state.currentUserEntry,
+                                      ),
+                                      const SizedBox(height: 16),
+                                    ],
+
+                                    // Section label
+                                    const _SectionLabel(text: 'RANKINGS'),
+                                    const SizedBox(height: 10),
+                                  ]),
+                                ),
+                              ),
+
+                              // Rest of list
+                              SliverPadding(
+                                padding: const EdgeInsets.fromLTRB(
+                                  20,
+                                  0,
+                                  20,
+                                  80,
+                                ),
+                                sliver: SliverList.builder(
+                                  itemCount: state.restOfList.length,
+                                  itemBuilder: (_, i) {
+                                    final entry = state.restOfList[i];
+                                    return LeaderboardRow(
+                                      entry: entry,
+                                      isCurrentUser: entry.uid == currentUid,
+                                    );
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                 ),
               ],
             ),
@@ -202,19 +206,13 @@ class _FilterChips extends StatelessWidget {
       child: Row(
         children: [
           _FilterChip(
-            label: '🌍 Global',
+            label: 'World',
             isActive: currentFilter == LeaderboardFilter.global,
             onTap: () => onFilterChanged(LeaderboardFilter.global),
           ),
           const SizedBox(width: 8),
           _FilterChip(
-            label: '📅 This Week',
-            isActive: currentFilter == LeaderboardFilter.thisWeek,
-            onTap: () => onFilterChanged(LeaderboardFilter.thisWeek),
-          ),
-          const SizedBox(width: 8),
-          _FilterChip(
-            label: '🗺 My Country',
+            label: 'My Country',
             isActive: currentFilter == LeaderboardFilter.country,
             onTap: () => onFilterChanged(LeaderboardFilter.country),
           ),
@@ -298,10 +296,7 @@ class _LoadingView extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircularProgressIndicator(
-            color: AppColors.gold,
-            strokeWidth: 2,
-          ),
+          CircularProgressIndicator(color: AppColors.gold, strokeWidth: 2),
           SizedBox(height: 16),
           Text(
             'Loading rankings...',
@@ -319,10 +314,7 @@ class _LoadingView extends StatelessWidget {
 
 // ── Error view ─────────────────────────────────
 class _ErrorView extends StatelessWidget {
-  const _ErrorView({
-    required this.message,
-    required this.onRetry,
-  });
+  const _ErrorView({required this.message, required this.onRetry});
 
   final String message;
   final VoidCallback onRetry;

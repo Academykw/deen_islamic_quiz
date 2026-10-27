@@ -4,7 +4,7 @@ import '../data/repositories/leaderboard_repository.dart';
 import '../data/repositories/user_repository.dart';
 import 'auth_provider.dart';
 
-enum LeaderboardFilter { global, thisWeek, country }
+enum LeaderboardFilter { global, country }
 
 class LeaderboardState {
   const LeaderboardState({
@@ -23,11 +23,9 @@ class LeaderboardState {
   final int currentUserRank;
   final LeaderboardEntry? currentUserEntry;
 
-  List<LeaderboardEntry> get topThree =>
-      entries.take(3).toList();
+  List<LeaderboardEntry> get topThree => entries.take(3).toList();
 
-  List<LeaderboardEntry> get restOfList =>
-      entries.skip(3).toList();
+  List<LeaderboardEntry> get restOfList => entries.skip(3).toList();
 
   LeaderboardState copyWith({
     List<LeaderboardEntry>? entries,
@@ -61,9 +59,7 @@ class LeaderboardNotifier extends Notifier<LeaderboardState> {
 
   final _repo = LeaderboardRepository.instance;
 
-  Future<void> loadLeaderboard({
-    LeaderboardFilter? filter,
-  }) async {
+  Future<void> loadLeaderboard({LeaderboardFilter? filter}) async {
     final activeFilter = filter ?? state.filter;
 
     state = state.copyWith(
@@ -79,15 +75,14 @@ class LeaderboardNotifier extends Notifier<LeaderboardState> {
         case LeaderboardFilter.global:
           entries = await _repo.getGlobalLeaderboard();
           break;
-        case LeaderboardFilter.thisWeek:
-          entries = await _repo.getWeeklyLeaderboard();
-          break;
         case LeaderboardFilter.country:
           final user = ref.read(currentUserProvider);
           if (user == null) {
             entries = await _repo.getGlobalLeaderboard();
           } else {
-            final userData = await UserRepository.instance.getUserData(user.uid);
+            final userData = await UserRepository.instance.getUserData(
+              user.uid,
+            );
             final country = userData?['country'] as String? ?? '';
             if (country.isEmpty) {
               entries = await _repo.getGlobalLeaderboard();
@@ -104,16 +99,9 @@ class LeaderboardNotifier extends Notifier<LeaderboardState> {
       LeaderboardEntry? userEntry;
 
       if (uid != null) {
-        userRank = await _repo.getUserRank(uid);
-        // Find user in list
-        try {
-          userEntry = entries.firstWhere(
-            (e) => e.uid == uid,
-          );
-        } catch (_) {
-          // User not in top list
-          userEntry = null;
-        }
+        final index = entries.indexWhere((entry) => entry.uid == uid);
+        userRank = index < 0 ? 0 : index + 1;
+        userEntry = index < 0 ? null : entries[index];
       }
 
       state = state.copyWith(
@@ -139,4 +127,6 @@ class LeaderboardNotifier extends Notifier<LeaderboardState> {
 }
 
 final leaderboardProvider =
-    NotifierProvider<LeaderboardNotifier, LeaderboardState>(LeaderboardNotifier.new);
+    NotifierProvider<LeaderboardNotifier, LeaderboardState>(
+      LeaderboardNotifier.new,
+    );
