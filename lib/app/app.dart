@@ -11,7 +11,7 @@ class DeenQuizApp extends ConsumerWidget {
     final router = ref.watch(routerProvider);
 
     return MaterialApp.router(
-      title: 'Deen IQ — Islamic Quiz',
+      title: 'Deen IQ - Islamic Quiz',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.dark,
       routerConfig: router,

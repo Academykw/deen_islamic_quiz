@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../core/constant/app_colors.dart';
 
-
 class AchievementData {
   const AchievementData({
     required this.id,
@@ -20,10 +19,7 @@ class AchievementData {
 }
 
 class AchievementBadge extends StatelessWidget {
-  const AchievementBadge({
-    super.key,
-    required this.achievement,
-  });
+  const AchievementBadge({super.key, required this.achievement});
 
   final AchievementData achievement;
 
@@ -36,8 +32,7 @@ class AchievementBadge extends StatelessWidget {
         opacity: achievement.isUnlocked ? 1.0 : 0.35,
         child: Container(
           width: 72,
-          padding: const EdgeInsets.symmetric(
-              vertical: 10, horizontal: 6),
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
           decoration: BoxDecoration(
             color: achievement.isUnlocked
                 ? AppColors.gold.withOpacity(0.08)
@@ -53,9 +48,7 @@ class AchievementBadge extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                achievement.isUnlocked
-                    ? achievement.emoji
-                    : '🔒',
+                achievement.isUnlocked ? achievement.emoji : '🔒',
                 style: const TextStyle(fontSize: 28),
               ),
               const SizedBox(height: 4),
@@ -97,9 +90,7 @@ class AchievementBadge extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              achievement.isUnlocked
-                  ? achievement.emoji
-                  : '🔒',
+              achievement.isUnlocked ? achievement.emoji : '🔒',
               style: const TextStyle(fontSize: 48),
             ),
             const SizedBox(height: 12),
@@ -127,8 +118,7 @@ class AchievementBadge extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 12, vertical: 5),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
               decoration: BoxDecoration(
                 color: achievement.isUnlocked
                     ? AppColors.emerald.withOpacity(0.15)
@@ -136,9 +126,7 @@ class AchievementBadge extends StatelessWidget {
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
-                achievement.isUnlocked
-                    ? '✅ Unlocked'
-                    : '🔒 Locked',
+                achievement.isUnlocked ? '✅ Unlocked' : '🔒 Locked',
                 style: TextStyle(
                   fontFamily: 'Tajawal',
                   fontSize: 12,
@@ -156,10 +144,7 @@ class AchievementBadge extends StatelessWidget {
             onPressed: () => Navigator.pop(context),
             child: const Text(
               'Close',
-              style: TextStyle(
-                fontFamily: 'Tajawal',
-                color: AppColors.gold,
-              ),
+              style: TextStyle(fontFamily: 'Tajawal', color: AppColors.gold),
             ),
           ),
         ],
@@ -227,11 +212,11 @@ List<AchievementData> buildAchievements({
       isUnlocked: stagesCompleted >= 5,
     ),
     AchievementData(
-      id: 'stages_15',
+      id: 'stages_150',
       emoji: '🏆',
       title: 'Champion',
-      description: 'Complete all 15 stages',
-      isUnlocked: stagesCompleted >= 15,
+      description: 'Complete all 150 stages',
+      isUnlocked: stagesCompleted >= 150,
     ),
     AchievementData(
       id: 'coins_1000',
@@ -252,7 +237,7 @@ List<AchievementData> buildAchievements({
       emoji: '📖',
       title: 'Quran Master',
       description: 'Complete all Hard stages',
-      isUnlocked: stagesCompleted >= 15,
+      isUnlocked: stagesCompleted >= 150,
     ),
     AchievementData(
       id: 'daily_7',
