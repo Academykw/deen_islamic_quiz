@@ -18,31 +18,17 @@ class AuthHeader extends StatelessWidget {
       children: [
         Row(
           children: [
-            Container(
+            Image.asset(
+              'assets/images/app_icon.png',
               width: 44,
               height: 44,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: const RadialGradient(colors: [
-                  AppColors.emeraldMid,
-                  AppColors.emerald,
-                ]),
-                border: Border.all(
-                    color: AppColors.gold.withValues(alpha: 0.5),
-                    width: 1.5),
-              ),
-              child: const Center(
-                child: Text('☪',
-                    style: TextStyle(
-                        fontSize: 22, color: AppColors.gold)),
-              ),
             ),
             const SizedBox(width: 12),
             const Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'DEEN',
+                  'AL NOOR',
                   style: TextStyle(
                     fontFamily: 'Tajawal',
                     fontSize: 20,
