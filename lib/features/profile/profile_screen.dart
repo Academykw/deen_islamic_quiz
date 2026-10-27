@@ -21,12 +21,10 @@ class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
 
   @override
-  ConsumerState<ProfileScreen> createState() =>
-      _ProfileScreenState();
+  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-class _ProfileScreenState
-    extends ConsumerState<ProfileScreen> {
+class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   bool _isEditingName = false;
   late TextEditingController _nameCtrl;
 
@@ -34,8 +32,7 @@ class _ProfileScreenState
   void initState() {
     super.initState();
     final user = ref.read(currentUserProvider);
-    _nameCtrl =
-        TextEditingController(text: user?.displayName ?? '');
+    _nameCtrl = TextEditingController(text: user?.displayName ?? '');
   }
 
   @override
@@ -50,10 +47,7 @@ class _ProfileScreenState
     final name = _nameCtrl.text.trim();
     if (name.isEmpty) return;
 
-    await UserRepository.instance.updateProfile(
-      uid: uid,
-      displayName: name,
-    );
+    await UserRepository.instance.updateProfile(uid: uid, displayName: name);
 
     setState(() => _isEditingName = false);
   }
@@ -61,19 +55,13 @@ class _ProfileScreenState
   Future<void> _updateAvatar(String emoji) async {
     final uid = ref.read(currentUserProvider)?.uid;
     if (uid == null) return;
-    await UserRepository.instance.updateProfile(
-      uid: uid,
-      avatarEmoji: emoji,
-    );
+    await UserRepository.instance.updateProfile(uid: uid, avatarEmoji: emoji);
   }
 
   Future<void> _updateCountry(String country) async {
     final uid = ref.read(currentUserProvider)?.uid;
     if (uid == null) return;
-    await UserRepository.instance.updateProfile(
-      uid: uid,
-      country: country,
-    );
+    await UserRepository.instance.updateProfile(uid: uid, country: country);
   }
 
   Future<void> _signOut() async {
@@ -128,7 +116,6 @@ class _ProfileScreenState
 
     if (confirmed == true && mounted) {
       await ref.read(currentUserProvider.notifier).signOut();
-      await ref.read(coinProvider.notifier).resetCoins();
       if (mounted) context.goNamed(Routes.login);
     }
   }
@@ -147,15 +134,22 @@ class _ProfileScreenState
       error: (err, _) => Scaffold(
         backgroundColor: AppColors.dark,
         body: Center(
-            child: Text('Error: $err', style: const TextStyle(color: Colors.white))),
+          child: Text(
+            'Error: $err',
+            style: const TextStyle(color: Colors.white),
+          ),
+        ),
       ),
       data: (user) {
         if (user == null) {
           return const Scaffold(
             backgroundColor: AppColors.dark,
             body: Center(
-                child: Text('Not logged in',
-                    style: TextStyle(color: Colors.white))),
+              child: Text(
+                'Not logged in',
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
           );
         }
 
@@ -179,9 +173,7 @@ class _ProfileScreenState
                   slivers: [
                     // ── App bar ───────────────────────
                     SliverToBoxAdapter(
-                      child: _ProfileAppBar(
-                        onSignOut: _signOut,
-                      ),
+                      child: _ProfileAppBar(onSignOut: _signOut),
                     ),
 
                     SliverPadding(
@@ -225,8 +217,7 @@ class _ProfileScreenState
                           // ── Guest upgrade banner ──────
                           if (user.isGuest)
                             _GuestBanner(
-                              onUpgrade: () =>
-                                  context.goNamed(Routes.register),
+                              onUpgrade: () => context.goNamed(Routes.register),
                             ),
 
                           if (user.isGuest) const SizedBox(height: 16),
@@ -272,11 +263,11 @@ class _ProfileScreenState
                               scrollDirection: Axis.horizontal,
                               gridDelegate:
                                   const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 2,
-                                crossAxisSpacing: 10,
-                                mainAxisSpacing: 10,
-                                childAspectRatio: 0.7,
-                              ),
+                                    crossAxisCount: 2,
+                                    crossAxisSpacing: 10,
+                                    mainAxisSpacing: 10,
+                                    childAspectRatio: 0.7,
+                                  ),
                               itemCount: achievements.length,
                               itemBuilder: (_, i) => AchievementBadge(
                                 achievement: achievements[i],
@@ -364,8 +355,6 @@ class _ProfileAppBar extends StatelessWidget {
           ),
           const SizedBox(width: 4),
           const CoinBadge(size: CoinBadgeSize.small),
-
-
         ],
       ),
     );
@@ -421,8 +410,7 @@ class _AvatarSection extends StatelessWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: AppColors.gold.withValues(alpha: 0.1),
-                    border: Border.all(
-                        color: AppColors.gold, width: 2.5),
+                    border: Border.all(color: AppColors.gold, width: 2.5),
                     boxShadow: [
                       BoxShadow(
                         color: AppColors.gold.withValues(alpha: 0.2),
@@ -446,9 +434,7 @@ class _AvatarSection extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: AppColors.gold,
                       shape: BoxShape.circle,
-                      border: Border.all(
-                          color: AppColors.darkCard,
-                          width: 2),
+                      border: Border.all(color: AppColors.darkCard, width: 2),
                     ),
                     child: const Icon(
                       Icons.edit_rounded,
@@ -480,27 +466,26 @@ class _AvatarSection extends StatelessWidget {
                     decoration: InputDecoration(
                       filled: true,
                       fillColor: AppColors.darkPanel,
-                      contentPadding:
-                      const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 10),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
                       border: OutlineInputBorder(
-                        borderRadius:
-                        BorderRadius.circular(10),
-                        borderSide: const BorderSide(
-                            color: AppColors.gold),
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: AppColors.gold),
                       ),
                       focusedBorder: OutlineInputBorder(
-                        borderRadius:
-                        BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(10),
                         borderSide: const BorderSide(
-                            color: AppColors.gold,
-                            width: 1.5),
+                          color: AppColors.gold,
+                          width: 1.5,
+                        ),
                       ),
                       enabledBorder: OutlineInputBorder(
-                        borderRadius:
-                        BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(10),
                         borderSide: const BorderSide(
-                            color: AppColors.darkBorder),
+                          color: AppColors.darkBorder,
+                        ),
                       ),
                     ),
                   ),
@@ -508,13 +493,14 @@ class _AvatarSection extends StatelessWidget {
                 const SizedBox(width: 8),
                 IconButton(
                   onPressed: onSaveName,
-                  icon: const Icon(Icons.check_rounded,
-                      color: AppColors.emeraldLight),
+                  icon: const Icon(
+                    Icons.check_rounded,
+                    color: AppColors.emeraldLight,
+                  ),
                 ),
                 IconButton(
                   onPressed: onCancelEdit,
-                  icon: const Icon(Icons.close_rounded,
-                      color: AppColors.wrong),
+                  icon: const Icon(Icons.close_rounded, color: AppColors.wrong),
                 ),
               ],
             )
@@ -561,24 +547,23 @@ class _AvatarSection extends StatelessWidget {
           GestureDetector(
             onTap: onCountryTap,
             child: Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 14, vertical: 7),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
               decoration: BoxDecoration(
                 color: AppColors.darkPanel,
                 borderRadius: BorderRadius.circular(20),
-                border:
-                Border.all(color: AppColors.darkBorder),
+                border: Border.all(color: AppColors.darkBorder),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.public_rounded,
-                      color: AppColors.textMuted, size: 14),
+                  const Icon(
+                    Icons.public_rounded,
+                    color: AppColors.textMuted,
+                    size: 14,
+                  ),
                   const SizedBox(width: 6),
                   Text(
-                    user.country.isEmpty
-                        ? 'Set your country'
-                        : user.country,
+                    user.country.isEmpty ? 'Set your country' : user.country,
                     style: TextStyle(
                       fontFamily: 'Tajawal',
                       fontSize: 13,
@@ -588,8 +573,11 @@ class _AvatarSection extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 4),
-                  const Icon(Icons.expand_more_rounded,
-                      color: AppColors.textMuted, size: 14),
+                  const Icon(
+                    Icons.expand_more_rounded,
+                    color: AppColors.textMuted,
+                    size: 14,
+                  ),
                 ],
               ),
             ),
@@ -619,18 +607,19 @@ class _GuestBanner extends StatelessWidget {
             ],
           ),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-              color: AppColors.gold.withValues(alpha: 0.4)),
+          border: Border.all(color: AppColors.gold.withValues(alpha: 0.4)),
         ),
         child: Row(
           children: [
-            const Icon(Icons.warning_amber_rounded,
-                color: AppColors.gold, size: 20),
+            const Icon(
+              Icons.warning_amber_rounded,
+              color: AppColors.gold,
+              size: 20,
+            ),
             const SizedBox(width: 10),
             const Expanded(
               child: Column(
-                crossAxisAlignment:
-                CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     'Guest Account',
@@ -654,8 +643,11 @@ class _GuestBanner extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            const Icon(Icons.arrow_forward_ios_rounded,
-                color: AppColors.gold, size: 14),
+            const Icon(
+              Icons.arrow_forward_ios_rounded,
+              color: AppColors.gold,
+              size: 14,
+            ),
           ],
         ),
       ),
